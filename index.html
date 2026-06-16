@@ -1,0 +1,3323 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+*{box-sizing:border-box;margin:0;padding:0}
+
+/* ── Tokens ── */
+:root{
+  --bg:#FDF8F4;
+  --surface:#FFFFFF;
+  --surface2:#FFF4EE;
+  --border:#F0E6DE;
+  --border2:#E8D8CC;
+  --text:#2D1F18;
+  --text2:#8A6F65;
+  --text3:#B8A49C;
+  --accent:#FF6B35;
+  --accent-soft:#FFF0EB;
+  --accent-hover:#E85A25;
+  --green:#4CAF7D;
+  --green-soft:#EEF8F2;
+  --amber:#F5A623;
+  --amber-soft:#FEF6E7;
+  --red:#E05555;
+  --red-soft:#FDEAEA;
+  --blue:#4A90D9;
+  --blue-soft:#EBF4FF;
+  --purple:#7B68EE;
+  --purple-soft:#F0EEFF;
+  --radius:16px;
+  --radius-sm:10px;
+  --radius-xs:6px;
+  --shadow:0 2px 12px rgba(45,31,24,.07);
+  --shadow-sm:0 1px 4px rgba(45,31,24,.06);
+}
+
+body{font-family:'Inter',system-ui,sans-serif;font-size:13px;color:var(--text);background:var(--bg);line-height:1.5}
+input,select,button,textarea{font-family:inherit;font-size:13px}
+
+/* ── Screens ── */
+.screen{display:none}.screen.active{display:block}
+
+/* ── Login ── */
+.login-shell{
+  display:flex;align-items:center;justify-content:center;
+  min-height:100vh;padding:2rem;
+  background:var(--bg);
+  background-image:radial-gradient(circle at 20% 20%, #FFE4D6 0%, transparent 50%),
+                   radial-gradient(circle at 80% 80%, #FFD6C2 0%, transparent 45%);
+}
+.login-card{
+  background:var(--surface);border-radius:24px;padding:2.5rem;width:380px;
+  box-shadow:0 8px 40px rgba(45,31,24,.12);
+}
+.brand{display:flex;align-items:center;gap:12px;margin-bottom:2rem}
+.brand-icon{
+  width:44px;height:44px;border-radius:14px;
+  background:linear-gradient(135deg,#FF6B35,#FF9A6C);
+  display:flex;align-items:center;justify-content:center;font-size:22px;
+  box-shadow:0 4px 12px rgba(255,107,53,.3);
+}
+.brand-name{font-size:18px;font-weight:700;color:var(--text);letter-spacing:-.02em}
+.brand-sub{font-size:12px;color:var(--text2);font-weight:400}
+.role-tabs{
+  display:flex;background:var(--bg);border-radius:12px;padding:4px;gap:4px;margin-bottom:1.5rem;
+  border:1px solid var(--border);
+}
+.role-tab{
+  flex:1;padding:8px;font-size:13px;font-weight:500;border:none;background:transparent;
+  cursor:pointer;border-radius:9px;color:var(--text2);transition:all .18s;
+}
+.role-tab.sel{background:var(--surface);color:var(--accent);font-weight:600;box-shadow:var(--shadow-sm)}
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.field label{font-size:11px;font-weight:600;color:var(--text2);letter-spacing:.05em;text-transform:uppercase}
+.field input,.field select{
+  padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);
+  background:var(--bg);color:var(--text);width:100%;outline:none;transition:border .15s,box-shadow .15s;
+}
+.field input:focus,.field select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(255,107,53,.12)}
+.btn-primary{
+  width:100%;padding:11px;background:linear-gradient(135deg,#FF6B35,#FF8C5A);color:white;
+  border:none;border-radius:var(--radius-sm);font-size:14px;font-weight:600;cursor:pointer;
+  margin-top:6px;box-shadow:0 4px 14px rgba(255,107,53,.35);transition:all .18s;letter-spacing:-.01em;
+}
+.btn-primary:hover{background:linear-gradient(135deg,#E85A25,#FF6B35);box-shadow:0 6px 18px rgba(255,107,53,.4);transform:translateY(-1px)}
+.btn-primary:active{transform:translateY(0)}
+
+/* ── App Shell ── */
+.app-shell{display:flex;min-height:600px}
+.sidebar{
+  width:230px;flex-shrink:0;background:var(--surface);
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;padding:1.25rem 0;
+}
+.sidebar-brand{
+  display:flex;align-items:center;gap:10px;
+  padding:0 1.25rem 1.25rem;
+  border-bottom:1px solid var(--border);margin-bottom:.75rem;
+}
+.sb-icon{
+  width:34px;height:34px;border-radius:10px;
+  background:linear-gradient(135deg,#FF6B35,#FF9A6C);
+  display:flex;align-items:center;justify-content:center;font-size:16px;
+  box-shadow:0 3px 8px rgba(255,107,53,.25);
+}
+.sb-name{font-size:14px;font-weight:700;color:var(--text);letter-spacing:-.01em}
+.sb-sub{font-size:11px;color:var(--text2)}
+.nav-section{padding:0 .75rem;margin-bottom:.25rem}
+.nav-label{font-size:10px;font-weight:600;color:var(--text3);letter-spacing:.07em;text-transform:uppercase;padding:.5rem .5rem .3rem}
+.nav-item{
+  display:flex;align-items:center;gap:10px;padding:9px 11px;
+  border-radius:var(--radius-sm);cursor:pointer;color:var(--text2);
+  font-size:13px;border:none;background:transparent;width:100%;text-align:left;
+  transition:all .15s;font-weight:500;
+}
+.nav-item:hover{background:var(--surface2);color:var(--text)}
+.nav-item.active{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.sidebar-footer{margin-top:auto;padding:.75rem}
+.user-chip{
+  display:flex;align-items:center;gap:10px;padding:10px 11px;
+  border-radius:var(--radius-sm);background:var(--bg);border:1px solid var(--border);
+}
+.avatar{
+  width:32px;height:32px;border-radius:50%;
+  background:linear-gradient(135deg,#FF6B35,#FF9A6C);
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:700;color:white;flex-shrink:0;
+  box-shadow:0 2px 6px rgba(255,107,53,.25);
+}
+.user-chip-name{font-size:12px;font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text)}
+.user-chip-role{font-size:10px;color:var(--text2)}
+.logout-btn{background:none;border:none;cursor:pointer;padding:4px;color:var(--text3);display:flex;align-items:center;border-radius:6px;transition:all .15s}
+.logout-btn:hover{color:var(--red);background:var(--red-soft)}
+
+/* ── Main Content ── */
+.main-content{flex:1;padding:1.75rem;overflow:auto;max-height:600px;background:var(--bg)}
+.page-header{margin-bottom:1.75rem}
+.page-title{font-size:22px;font-weight:700;margin-bottom:4px;color:var(--text);letter-spacing:-.03em}
+.page-sub{font-size:13px;color:var(--text2);font-weight:400}
+
+/* ── Metrics ── */
+.metrics-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:1.5rem}
+.metric-card{
+  background:var(--surface);border-radius:var(--radius);padding:16px 18px;
+  border:1px solid var(--border);box-shadow:var(--shadow-sm);
+  transition:transform .15s,box-shadow .15s;
+}
+.metric-card:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
+.metric-label{font-size:11px;font-weight:600;color:var(--text2);margin-bottom:8px;text-transform:uppercase;letter-spacing:.04em}
+.metric-value{font-size:28px;font-weight:700;line-height:1;letter-spacing:-.03em;color:var(--text)}
+.metric-sub{font-size:11px;color:var(--text3);margin-top:5px}
+
+/* ── Cards ── */
+.card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);overflow:hidden;margin-bottom:1rem;
+  box-shadow:var(--shadow-sm);
+}
+.card-header{
+  padding:14px 18px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  background:var(--surface);
+}
+.card-title{font-size:14px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:7px;letter-spacing:-.01em}
+
+/* ── Tables ── */
+table{width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed}
+th{
+  padding:10px 14px;text-align:left;font-size:10px;font-weight:600;
+  color:var(--text2);letter-spacing:.04em;text-transform:uppercase;
+  border-bottom:1px solid var(--border);background:var(--bg);
+}
+td{padding:10px 14px;border-bottom:1px solid var(--border);vertical-align:middle;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+tr:last-child td{border-bottom:none}
+tbody tr:hover{background:#FFFAF7}
+
+/* ── Badges ── */
+.badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:99px;font-size:11px;font-weight:600;white-space:nowrap}
+.bg-purple{background:var(--purple-soft);color:var(--purple)}
+.bg-green{background:var(--green-soft);color:#2D7A52}
+.bg-amber{background:var(--amber-soft);color:#A06600}
+.bg-red{background:var(--red-soft);color:#B83333}
+.bg-blue{background:var(--blue-soft);color:#2065A8}
+.bg-teal{background:#E6F8F2;color:#0E6E56}
+.bg-gray{background:#F5F0EC;color:#6A5A54}
+
+/* ── Buttons ── */
+.btn{
+  padding:7px 14px;border-radius:var(--radius-sm);font-size:12px;font-weight:600;cursor:pointer;
+  border:1.5px solid var(--border2);background:var(--surface);color:var(--text);
+  display:inline-flex;align-items:center;gap:6px;transition:all .15s;letter-spacing:-.01em;
+}
+.btn:hover{background:var(--surface2);border-color:var(--accent);color:var(--accent)}
+.btn-accent{background:linear-gradient(135deg,#FF6B35,#FF8C5A);color:white;border-color:transparent;box-shadow:0 3px 10px rgba(255,107,53,.28)}
+.btn-accent:hover{background:linear-gradient(135deg,#E85A25,#FF6B35);box-shadow:0 4px 14px rgba(255,107,53,.35);transform:translateY(-1px)}
+.btn-danger{color:var(--red);border-color:#F5C0C0;background:transparent}
+.btn-danger:hover{background:var(--red-soft);border-color:var(--red)}
+.btn-sm{padding:4px 10px;font-size:11px;border-radius:8px}
+.btn-approve{color:var(--green);border-color:#B0E0C4}
+.btn-approve:hover{background:var(--green-soft);border-color:var(--green)}
+
+/* ── Forms ── */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:16px 18px}
+.form-field{display:flex;flex-direction:column;gap:6px}
+.form-field label{font-size:11px;font-weight:600;color:var(--text2);letter-spacing:.04em;text-transform:uppercase}
+.form-field input,.form-field select,.form-field textarea{
+  padding:8px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);
+  background:var(--bg);color:var(--text);width:100%;outline:none;transition:border .15s,box-shadow .15s;
+}
+.form-field input:focus,.form-field select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(255,107,53,.1)}
+.form-actions{padding:0 18px 16px;display:flex;gap:8px;align-items:center}
+
+/* ── Alerts ── */
+.alert-bar{
+  padding:11px 16px;font-size:13px;font-weight:500;border-radius:var(--radius-sm);
+  margin-bottom:1rem;display:none;align-items:center;gap:8px;position:sticky;top:0;z-index:10;
+  box-shadow:var(--shadow);
+}
+.alert-s{background:var(--green-soft);color:#2D7A52;border:1.5px solid #B0E0C4}
+.alert-e{background:var(--red-soft);color:#B83333;border:1.5px solid #F5C0C0}
+
+/* ── Layout helpers ── */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.filter-row{display:flex;gap:6px;flex-wrap:wrap}
+.filter-select{
+  font-size:12px;font-weight:500;padding:6px 10px;
+  border:1.5px solid var(--border);border-radius:var(--radius-sm);
+  background:var(--surface);color:var(--text);outline:none;
+  transition:border .15s;cursor:pointer;
+}
+.filter-select:focus{border-color:var(--accent)}
+
+/* ── Inline edit ── */
+.edit-expanded{background:var(--surface2)}
+.edit-inner{padding:16px 18px}
+.edit-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:10px}
+.edit-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px}
+.edit-field label{font-size:10px;font-weight:600;color:var(--text2);letter-spacing:.05em;text-transform:uppercase;display:block;margin-bottom:4px}
+.edit-input{
+  font-size:12px;padding:7px 10px;border:1.5px solid var(--border);
+  border-radius:var(--radius-sm);background:var(--surface);color:var(--text);width:100%;outline:none;transition:border .15s;
+}
+.edit-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(255,107,53,.1)}
+
+/* ── Profile breakdown ── */
+.info-row{display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:9px 0;border-bottom:1px solid var(--border)}
+.info-row:last-child{border-bottom:none}
+.info-label{color:var(--text2);font-weight:500}
+.prog-track{height:6px;background:var(--surface2);border-radius:99px;overflow:hidden;margin:8px 0 4px}
+.prog-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,#FF6B35,#FF9A6C)}
+
+/* ── Regularization modal ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(45,31,24,.45);z-index:200;display:flex;align-items:center;justify-content:center;padding:1rem}
+.modal-box{background:var(--surface);border-radius:20px;width:100%;max-width:480px;box-shadow:0 16px 60px rgba(45,31,24,.18);overflow:hidden}
+.modal-header{padding:18px 22px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-size:15px;font-weight:700;color:var(--text)}
+.modal-close{border:none;background:none;font-size:18px;cursor:pointer;color:var(--text2);line-height:1;padding:4px}
+.modal-body{padding:18px 22px}
+.modal-footer{padding:12px 22px 18px;display:flex;gap:8px;justify-content:flex-end}
+.reg-badge-pending{background:var(--amber-soft);color:#A06600;font-size:10px;font-weight:600;padding:1px 8px;border-radius:99px;display:inline-block;vertical-align:middle;margin-left:6px}
+.reg-badge-approved{background:var(--green-soft);color:#2D7A52;font-size:10px;font-weight:600;padding:1px 8px;border-radius:99px;display:inline-block;vertical-align:middle;margin-left:6px}
+.reg-badge-rejected{background:var(--red-soft);color:#B83333;font-size:10px;font-weight:600;padding:1px 8px;border-radius:99px;display:inline-block;vertical-align:middle;margin-left:6px}
+
+/* ── Misc ── */
+.empty-state{padding:3rem 1rem;text-align:center;color:var(--text3)}
+.empty-state p:first-child{font-size:32px;opacity:.3;margin-bottom:6px}
+.chip-admin{background:var(--amber-soft);color:#A06600;display:inline-flex;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:600}
+.chip-emp{background:var(--blue-soft);color:#2065A8;display:inline-flex;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:600}
+.save-indicator{font-size:11px;color:var(--accent);display:none;align-items:center;gap:4px}
+.save-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.pending-badge{margin-left:auto;background:var(--red-soft);color:var(--red);font-size:10px;font-weight:600;padding:1px 7px;border-radius:99px;display:none}
+.storage-status{font-size:10px;color:var(--text3);text-align:center;padding:8px;border-top:1px solid var(--border);margin-top:.5rem}
+.login-hint{font-size:11px;color:var(--text3);text-align:center;margin-top:10px}
+.login-hint code{background:var(--bg);padding:1px 5px;border-radius:4px;border:1px solid var(--border)}
+</style>
+</head>
+<body>
+
+<div id="galert" class="alert-bar"></div>
+<div id="save-indicator" class="save-indicator" style="display:none;position:fixed;bottom:16px;right:16px;background:var(--surface);border:1.5px solid var(--border);border-radius:12px;padding:8px 14px;font-size:12px;font-weight:500;color:var(--accent);gap:6px;align-items:center;z-index:100;box-shadow:0 4px 16px rgba(45,31,24,.1)">
+  <div class="save-dot"></div>Saving…
+</div>
+
+<!-- LOGIN -->
+<div id="sc-login" class="screen active">
+<div class="login-shell">
+<div class="login-card">
+  <div class="brand">
+    <div class="brand-icon" style="overflow:hidden;padding:0;background:linear-gradient(135deg,#FF6B35,#FF9A6C)">
+      <svg width="44" height="44" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- Calendar base -->
+        <rect x="8" y="13" width="28" height="22" rx="4" fill="white" fill-opacity="0.92"/>
+        <!-- Calendar top rings -->
+        <rect x="14" y="10" width="3" height="7" rx="1.5" fill="white"/>
+        <rect x="27" y="10" width="3" height="7" rx="1.5" fill="white"/>
+        <!-- Header bar on calendar -->
+        <rect x="8" y="13" width="28" height="7" rx="4" fill="white" fill-opacity="0.3"/>
+        <rect x="8" y="17" width="28" height="3" fill="white" fill-opacity="0.3"/>
+        <!-- Checkmark in calendar body -->
+        <path d="M17 25.5 L20.5 29 L27 22" stroke="#FF6B35" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <div><div class="brand-name">PeopleDesk</div><div class="brand-sub">HR Management for <strong>Sushobhit</strong></div></div>
+  </div>
+  <div id="loading-msg" style="text-align:center;padding:2rem 0;color:var(--color-text-secondary);font-size:13px">Loading data…</div>
+  <div id="login-form" style="display:none">
+    <div class="field">
+      <label>Employee Code</label>
+      <input
+        type="text"
+        id="lg-emp"
+        placeholder="EMP001"
+      >
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input type="password" id="lg-pass" placeholder="Enter your password" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button class="btn-primary" onclick="doLogin()">Sign in</button>
+  </div>
+</div>
+</div>
+</div>
+
+<!-- ADMIN -->
+<div id="sc-admin" class="screen">
+<div class="app-shell">
+  <nav class="sidebar">
+    <div class="sidebar-brand">
+      <div class="sb-icon" style="overflow:hidden;padding:0;background:linear-gradient(135deg,#FF6B35,#FF9A6C)">
+        <svg width="34" height="34" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="6" y="10" width="22" height="17" rx="3" fill="white" fill-opacity="0.92"/>
+          <rect x="11" y="7.5" width="2.5" height="5.5" rx="1.25" fill="white"/>
+          <rect x="20.5" y="7.5" width="2.5" height="5.5" rx="1.25" fill="white"/>
+          <rect x="6" y="10" width="22" height="5.5" rx="3" fill="white" fill-opacity="0.3"/>
+          <rect x="6" y="13" width="22" height="2.5" fill="white" fill-opacity="0.3"/>
+          <path d="M13 20.5 L16 23.5 L21 17.5" stroke="#FF6B35" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div><div class="sb-name">PeopleDesk</div><div class="sb-sub">Sushobhit · Admin</div></div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Main</div>
+      <button class="nav-item active" onclick="aTab('overview')" id="nav-overview">📊 Overview</button>
+      <button class="nav-item" onclick="aTab('employees')" id="nav-employees">👥 Employees</button>
+      <button class="nav-item" onclick="aTab('leaves')" id="nav-leaves">📅 Leaves <span class="pending-badge" id="pending-badge"></span></button>
+      <button class="nav-item" onclick="aTab('attendance')" id="nav-attendance">🕐 Attendance <span class="pending-badge" id="reg-pending-badge"></span></button>
+      <button class="nav-item" onclick="aTab('empprofile')" id="nav-empprofile" style="display:none">👤 <span id="nav-empprofile-label">Employee</span></button>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Account</div>
+      <button class="nav-item" onclick="aTab('settings')" id="nav-settings">⚙️ Settings</button>
+    </div>
+    <div class="sidebar-footer">
+      <div class="user-chip">
+        <div class="avatar">AD</div>
+        <div style="flex:1;min-width:0"><div class="user-chip-name">Administrator</div><div class="user-chip-role">Full access</div></div>
+        <button class="logout-btn" onclick="logout()" title="Sign out">✕</button>
+      </div>
+      <div class="storage-status" id="storage-status">● Synced</div>
+    </div>
+  </nav>
+  <main class="main-content">
+    <div id="at-overview">
+      <div class="page-header" style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:8px">
+        <div>
+          <div class="page-title">Overview</div>
+          <div class="page-sub" id="adm-date"></div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <select class="filter-select" id="ov-branch-filter" onchange="renderAdmin()" style="font-size:12px">
+            <option value="">All branches</option>
+            <option>Kalyan</option><option>Dombivali</option><option>Ambernath</option>
+          </select>
+          <select class="filter-select" id="ov-month-filter" onchange="renderAdmin()" style="font-size:12px">
+            <option value="">Current month</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- ── Section: Leave metrics ── -->
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3)">Leave</div>
+        <div style="flex:1;height:1px;background:var(--border)"></div>
+      </div>
+      <div class="metrics-grid" id="adm-metrics" style="margin-bottom:1.25rem"></div>
+
+      <!-- ── Section: Attendance metrics ── -->
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3)">Attendance</div>
+        <div style="flex:1;height:1px;background:var(--border)"></div>
+        <div id="ov-att-month-label" style="font-size:11px;color:var(--text3)"></div>
+      </div>
+      <div id="adm-att-metrics" class="metrics-grid" style="margin-bottom:1.5rem"></div>
+
+      <!-- ── Attendance flag strips ── -->
+      <div id="ov-att-flags" style="margin-bottom:1.5rem;display:none">
+        <div style="display:flex;gap:8px;flex-wrap:wrap" id="ov-att-flag-chips"></div>
+      </div>
+
+      <!-- ── Attendance breakdown by employee ── -->
+      <div class="card" id="ov-att-breakdown-card" style="display:none;margin-bottom:1rem">
+        <div class="card-header" style="justify-content:space-between">
+          <div class="card-title">📋 Attendance breakdown <span id="ov-att-breakdown-month" style="font-weight:400;color:var(--text2);font-size:12px"></span></div>
+          <button class="btn btn-sm" onclick="aTab('attendance')">View full report →</button>
+        </div>
+        <div style="overflow-x:auto">
+          <table>
+            <thead><tr>
+              <th style="width:22%">Employee</th>
+              <th style="width:11%">Present</th>
+              <th style="width:10%">LOP</th>
+              <th style="width:10%">Week Off</th>
+              <th style="width:10%">PL</th>
+              <th style="width:10%">Half Day</th>
+              <th style="width:12%">Late In</th>
+              <th style="width:15%">Avg Hours</th>
+            </tr></thead>
+            <tbody id="ov-att-breakdown-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── Regularization requests ── -->
+      <div class="card" id="ov-reg-card" style="margin-bottom:1rem">
+        <div class="card-header" style="justify-content:space-between">
+          <div class="card-title">🔄 Regularization Requests
+            <span id="ov-reg-pending-chip" style="display:none;background:var(--amber-soft);color:#A06600;font-size:10px;font-weight:600;padding:1px 8px;border-radius:99px;margin-left:6px"></span>
+          </div>
+          <div style="display:flex;gap:6px;align-items:center">
+            <select class="filter-select" id="ov-reg-filter-emp" onchange="renderOvRegRequests()" style="font-size:12px"><option value="">All employees</option></select>
+            <select class="filter-select" id="ov-reg-filter-status" onchange="renderOvRegRequests()" style="font-size:12px">
+              <option value="Pending">Pending</option>
+              <option value="">All</option>
+              <option value="Approved">Approved</option>
+              <option value="Rejected">Rejected</option>
+            </select>
+            <button class="btn btn-sm" onclick="aTab('leaves')">View all →</button>
+          </div>
+        </div>
+        <div style="overflow-x:auto"><table>
+          <thead><tr>
+            <th style="width:15%">Employee</th>
+            <th style="width:10%">Date</th>
+            <th style="width:8%">Shift</th>
+            <th style="width:9%">Was In</th>
+            <th style="width:9%">Was Out</th>
+            <th style="width:9%">Req In</th>
+            <th style="width:9%">Req Out</th>
+            <th style="width:16%">Reason</th>
+            <th style="width:8%">Status</th>
+            <th style="width:7%">Action</th>
+          </tr></thead>
+          <tbody id="ov-reg-tbody"></tbody>
+        </table></div>
+      </div>
+
+      <!-- ── Two-col: pending approvals + employee list ── -->
+      <div class="two-col" style="margin-bottom:1rem">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Pending approvals</div>
+            <span id="pending-count" class="badge bg-red">0</span>
+          </div>
+          <table><thead><tr><th style="width:44%">Employee</th><th style="width:16%">Days</th><th style="width:40%">Action</th></tr></thead>
+          <tbody id="adm-pending"></tbody></table>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">All employees</div>
+          </div>
+          <table><thead><tr><th style="width:44%">Name</th><th style="width:22%">Branch</th><th style="width:34%">PL balance</th></tr></thead>
+          <tbody id="adm-emp-ov"></tbody></table>
+        </div>
+      </div>
+    </div>
+    <div id="at-employees" style="display:none">
+      <div class="page-header"><div class="page-title">Employees</div><div class="page-sub">Manage team members across all branches</div></div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">Add employee</div></div>
+        <div class="form-grid">
+          <div class="form-field"><label>Full name</label><input type="text" id="ae-name" placeholder="e.g. Ravi Sharma"></div>
+          <div class="form-field"><label>Employee code</label><input type="text" id="ae-code" placeholder="e.g. EMP001" style="text-transform:uppercase"></div>
+          <div class="form-field"><label>Branch</label><select id="ae-branch"><option>Kalyan</option><option>Dombivali</option><option>Ambernath</option></select></div>
+          <div class="form-field"><label>Designation</label><select id="ae-desig"><option>Store Manager</option><option>Jewellery Consultant</option><option>Calling Executive</option></select></div>
+          <div class="form-field"><label>Password</label><input type="text" id="ae-pass" value="Welcome123"></div>
+          <div class="form-field"><label>PL start month</label><div style="display:flex;gap:6px"><select id="ae-plstart-m"></select><select id="ae-plstart-y"></select></div></div>
+          <div class="form-field"><label>Carry forward PL</label><input type="number" id="ae-cf" value="0" min="0" step="0.5"></div>
+        </div>
+        <div class="form-actions"><button class="btn btn-accent" onclick="addEmployee()">Add employee</button></div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Team roster</div>
+          <select class="filter-select" id="emp-filter-branch" onchange="renderAdmEmpTable()"><option value="">All branches</option><option>Kalyan</option><option>Dombivali</option><option>Ambernath</option></select>
+        </div>
+        <div style="overflow-x:auto"><table>
+          <thead><tr><th style="width:22%">Name</th><th style="width:13%">Branch</th><th style="width:16%">Designation</th><th style="width:11%">PL start</th><th style="width:7%">CF</th><th style="width:9%">Balance</th><th style="width:22%">Actions</th></tr></thead>
+          <tbody id="adm-emp-tbl"></tbody>
+        </table></div>
+      </div>
+    </div>
+    <div id="at-leaves" style="display:none">
+      <div class="page-header"><div class="page-title">Leave management</div><div class="page-sub">Review, approve, and add leave entries</div></div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">Add leave entry</div></div>
+        <div class="form-grid">
+          <div class="form-field"><label>Employee</label><select id="ml-emp"></select></div>
+          <div class="form-field"><label>Status</label><select id="ml-status"><option>Approved</option><option>Pending</option><option>Rejected</option></select></div>
+          <div class="form-field"><label>From date</label><input type="date" id="ml-from"></div>
+          <div class="form-field"><label>To date</label><input type="date" id="ml-to"></div>
+          <div class="form-field"><label>Leave type</label><select id="ml-halfday" style="padding:7px 10px;border:0.5px solid var(--color-border-secondary);border-radius:8px;background:var(--color-background-primary);color:var(--color-text-primary);outline:none;width:100%"><option value="full">Full day(s)</option><option value="half">Half day (0.5 PL)</option></select></div>
+          <div class="form-field"><label>Month (YYYY-MM)</label><input type="month" id="ml-month"></div>
+          <div class="form-field"><label>Note (optional)</label><input type="text" id="ml-note" placeholder="Reason or note"></div>
+        </div>
+        <div class="form-actions"><button class="btn btn-accent" onclick="addLeave()">Add entry</button></div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">All leave entries</div>
+          <div class="filter-row">
+            <select id="af-emp" onchange="renderAdmLeaves()" class="filter-select"><option value="">All employees</option></select>
+            <select id="af-mon" onchange="renderAdmLeaves()" class="filter-select"><option value="">All months</option></select>
+            <select id="af-src" onchange="renderAdmLeaves()" class="filter-select"><option value="">All sources</option><option value="admin">Admin</option><option value="employee">Employee</option></select>
+            <select id="af-stat" onchange="renderAdmLeaves()" class="filter-select"><option value="">All status</option><option value="Approved">Approved</option><option value="Pending">Pending</option><option value="Rejected">Rejected</option></select>
+          </div>
+        </div>
+        <div style="overflow-x:auto"><table>
+          <thead><tr>
+            <th style="width:14%">Employee</th><th style="width:10%">Branch</th>
+            <th style="width:10%">From</th><th style="width:10%">To</th>
+            <th style="width:6%">Days</th><th style="width:11%">Month</th>
+            <th style="width:13%">Note</th><th style="width:8%">Source</th>
+            <th style="width:9%">Status</th><th style="width:9%">Actions</th>
+          </tr></thead>
+          <tbody id="adm-leaves-tbl"></tbody>
+        </table></div>
+      </div>
+
+      <!-- Regularization Requests -->
+      <div class="card" style="margin-top:1.5rem">
+        <div class="card-header">
+          <div class="card-title">🔄 Regularization Requests</div>
+          <div class="filter-row">
+            <select class="filter-select" id="reg-filter-emp" onchange="renderRegRequests()"><option value="">All employees</option></select>
+            <select class="filter-select" id="reg-filter-month" onchange="renderRegRequests()"><option value="">All months</option></select>
+            <select class="filter-select" id="reg-filter-status" onchange="renderRegRequests()">
+              <option value="">All status</option>
+              <option value="Pending">Pending</option>
+              <option value="Approved">Approved</option>
+              <option value="Rejected">Rejected</option>
+            </select>
+          </div>
+        </div>
+        <div style="overflow-x:auto"><table>
+          <thead><tr>
+            <th style="width:14%">Employee</th>
+            <th style="width:10%">Date</th>
+            <th style="width:8%">Shift</th>
+            <th style="width:9%">Was In</th>
+            <th style="width:9%">Was Out</th>
+            <th style="width:9%">Req In</th>
+            <th style="width:9%">Req Out</th>
+            <th style="width:14%">Reason</th>
+            <th style="width:9%">Status</th>
+            <th style="width:9%">Action</th>
+          </tr></thead>
+          <tbody id="reg-requests-tbody"></tbody>
+        </table></div>
+      </div>
+    </div>
+    <div id="at-settings" style="display:none">
+      <div class="page-header"><div class="page-title">Settings</div><div class="page-sub">Manage passwords and data</div></div>
+      <div class="two-col">
+        <div class="card">
+          <div class="card-header"><div class="card-title">Change admin password</div></div>
+          <div style="padding:14px 16px;display:flex;flex-direction:column;gap:10px">
+            <div class="form-field"><label>New password</label><input type="password" id="adm-newpass" placeholder="Enter new password"></div>
+            <div class="form-field"><label>Confirm password</label><input type="password" id="adm-confpass" placeholder="Confirm new password"></div>
+            <button class="btn btn-accent" onclick="changeAdminPass()">Update password</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">Reset employee password</div></div>
+          <div style="padding:14px 16px;display:flex;flex-direction:column;gap:10px">
+            <div class="form-field"><label>Employee</label><select id="adm-emp-pass-sel" style="padding:7px 10px;border:0.5px solid var(--color-border-secondary);border-radius:8px;background:var(--color-background-primary);color:var(--color-text-primary);outline:none"></select></div>
+            <div class="form-field"><label>New password</label><input type="password" id="adm-emp-newpass" placeholder="Enter new password"></div>
+            <button class="btn btn-accent" onclick="resetEmpPass()">Reset password</button>
+          </div>
+        </div>
+      </div>
+      <div class="card" style="margin-top:1rem">
+        <div class="card-header"><div class="card-title">📊 Excel Database</div></div>
+        <div style="padding:14px 16px;display:flex;flex-direction:column;gap:12px">
+          <div style="font-size:12px;color:var(--color-text-secondary);line-height:1.6">Export all employees and leave records to a formatted Excel workbook (.xlsx) for offline reference. You can re-import the same file later to restore data.</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-accent" onclick="exportToExcel()">📤 Export to Excel (.xlsx)</button>
+            <button class="btn" onclick="document.getElementById('xl-import-input').click()">📥 Import from Excel</button>
+            <input type="file" id="xl-import-input" accept=".xlsx" style="display:none" onchange="importFromExcel(this)">
+          </div>
+          <div id="xl-import-msg" style="display:none;font-size:12px;padding:8px 12px;border-radius:8px"></div>
+        </div>
+      </div>
+      <div class="card" style="margin-top:1rem">
+        <div class="card-header"><div class="card-title">Data management</div></div>
+        <div style="padding:14px 16px;display:flex;gap:8px">
+          <button class="btn" onclick="exportData()">📥 Export JSON backup</button>
+          <button class="btn btn-danger" onclick="if(confirm('Reset ALL data to defaults?'))resetToDefaults()">🗑 Reset to defaults</button>
+        </div>
+      </div>
+    </div>
+    <div id="at-attendance" style="display:none">
+      <div class="page-header"><div class="page-title">Attendance</div><div class="page-sub">Upload punch-in / punch-out data from your biometric Excel export</div></div>
+
+      <!-- Upload Card -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">📂 Upload attendance Excel</div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <button class="btn" onclick="downloadAttTemplate()">⬇ Download template</button>
+            <button class="btn btn-accent" onclick="document.getElementById('att-file-input').click()">📤 Upload Excel</button>
+            <input type="file" id="att-file-input" accept=".xlsx,.xls" style="display:none" onchange="handleAttUpload(this)">
+            <button class="btn btn-danger" id="att-clear-btn" style="display:none" onclick="clearAttData()">🗑 Clear data</button>
+          </div>
+        </div>
+        <div style="padding:16px 18px">
+          <div style="font-size:12px;color:var(--text2);line-height:1.8;background:var(--bg);border-radius:10px;padding:12px 14px;border:1px dashed var(--border2)">
+            <strong style="color:var(--text)">Expected Excel format per employee block:</strong><br>
+            Row 1: <code style="background:var(--surface);padding:1px 5px;border-radius:4px;font-size:11px">Name:-</code> in column C, employee name in column D &nbsp;·&nbsp;
+            Row 2: Headers — <code style="background:var(--surface);padding:1px 5px;border-radius:4px;font-size:11px">Date | Day | Shift | In | Out</code><br>
+            Then data rows, one per day. Multiple employees can be stacked with a blank row between blocks.<br>
+            Shifts: <code style="background:var(--surface);padding:1px 5px;border-radius:4px;font-size:11px">1st</code> (10–19) &nbsp;·&nbsp;
+            <code style="background:var(--surface);padding:1px 5px;border-radius:4px;font-size:11px">Mid</code> (11–20) &nbsp;·&nbsp;
+            <code style="background:var(--surface);padding:1px 5px;border-radius:4px;font-size:11px">12-9</code> (12–21) &nbsp;·&nbsp;
+            <code style="background:var(--surface);padding:1px 5px;border-radius:4px;font-size:11px">2nd</code> (13–22) &nbsp;·&nbsp;
+            Non-working: <code style="background:var(--surface);padding:1px 5px;border-radius:4px;font-size:11px">WeekOff</code> &nbsp;·&nbsp;
+            <code style="background:var(--surface);padding:1px 5px;border-radius:4px;font-size:11px">PL</code> (deducted from PL balance) &nbsp;·&nbsp;
+            <code style="background:var(--surface);padding:1px 5px;border-radius:4px;font-size:11px">LOP</code> (loss of pay)
+          </div>
+          <div id="att-upload-msg" style="display:none;margin-top:10px;font-size:12px;padding:10px 14px;border-radius:10px"></div>
+        </div>
+      </div>
+
+      <!-- Filters + Summary -->
+      <div id="att-results" style="display:none">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">📋 Attendance report</div>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <select class="filter-select" id="att-filter-branch" onchange="onAttBranchChange()"><option value="">All stores</option><option>Kalyan</option><option>Dombivali</option><option>Ambernath</option></select>
+              <select class="filter-select" id="att-filter-month" onchange="onAttMonthChange()"><option value="">All months</option></select>
+              <select class="filter-select" id="att-filter-emp" onchange="renderAttTable()"><option value="">All employees</option></select>
+              <select class="filter-select" id="att-filter-date" onchange="renderAttTable()"><option value="">All dates</option></select>
+              <select class="filter-select" id="att-filter-status" onchange="renderAttTable()">
+                <option value="">All statuses</option>
+                <option value="Present">Present</option>
+                <option value="Absent">Absent</option>
+                <option value="Half Day">Half Day</option>
+                <option value="On Leave">On Leave</option>
+                <option value="PL (Paid Leave)">PL (Paid Leave)</option>
+                <option value="LOP (Loss of Pay)">LOP (Loss of Pay)</option>
+                <option value="Week Off">Week Off</option>
+                <option value="Late In">Late In</option>
+                <option value="Early Out">Early Out</option>
+                <option value="Missing Out">Missing Out</option>
+              </select>
+              <button class="btn" onclick="exportAttExcel()">📤 Export report</button>
+              <button class="btn btn-danger btn-sm" onclick="deleteFilteredAtt()" title="Delete records matching current filters">🗑 Delete filtered</button>
+            </div>
+          </div>
+          <!-- Summary chips -->
+          <div id="att-summary" style="display:flex;gap:10px;flex-wrap:wrap;padding:12px 18px;border-bottom:1px solid var(--border)"></div>
+          <div style="overflow-x:auto"><table style="table-layout:auto">
+            <thead><tr>
+              <th style="min-width:140px">Employee</th>
+              <th style="min-width:100px">Date</th>
+              <th style="min-width:80px">Day</th>
+              <th style="min-width:80px">Shift</th>
+              <th style="min-width:90px">Shift time</th>
+              <th style="min-width:80px">In</th>
+              <th style="min-width:80px">Out</th>
+              <th style="min-width:80px">Hours</th>
+              <th style="min-width:120px">Status</th>
+              <th style="min-width:110px">Action</th>
+            </tr></thead>
+            <tbody id="att-tbl-body"></tbody>
+          </table></div>
+        </div>
+      </div>
+    </div>
+    <div id="at-empprofile" style="display:none">
+      <div class="page-header" style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:8px">
+        <div>
+          <div class="page-title" id="ep-title">Employee Profile</div>
+          <div class="page-sub" id="ep-sub"></div>
+        </div>
+        <button class="btn" onclick="aTab('employees')" style="flex-shrink:0">← Back to employees</button>
+      </div>
+      <div class="metrics-grid" id="ep-metrics"></div>
+      <div class="two-col">
+        <div class="card">
+          <div class="card-header"><div class="card-title">PL breakdown</div></div>
+          <div id="ep-breakdown" style="padding:14px 16px"></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">Month-by-month usage</div></div>
+          <div style="overflow-x:auto"><table>
+            <thead><tr>
+              <th style="width:30%">Month</th><th style="width:22%">Days used</th><th style="width:24%">Status</th><th style="width:24%">Note</th>
+            </tr></thead>
+            <tbody id="ep-monthly"></tbody>
+          </table></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Full leave history</div>
+          <select class="filter-select" id="ep-filter-stat" onchange="renderEpHistory()">
+            <option value="">All statuses</option>
+            <option value="Approved">Approved</option>
+            <option value="Pending">Pending</option>
+            <option value="Rejected">Rejected</option>
+          </select>
+        </div>
+        <div style="overflow-x:auto"><table>
+          <thead><tr>
+            <th style="width:14%">From</th><th style="width:14%">To</th><th style="width:7%">Days</th>
+            <th style="width:13%">Month</th><th style="width:20%">Note</th><th style="width:9%">By</th>
+            <th style="width:11%">Applied on</th><th style="width:12%">Status</th>
+          </tr></thead>
+          <tbody id="ep-hist"></tbody>
+        </table></div>
+      </div>
+    </div>
+  </main>
+</div>
+</div>
+
+<!-- EMPLOYEE -->
+<div id="sc-employee" class="screen">
+<div class="app-shell">
+  <nav class="sidebar">
+    <div class="sidebar-brand">
+      <div class="sb-icon" style="overflow:hidden;padding:0;background:linear-gradient(135deg,#FF6B35,#FF9A6C)">
+        <svg width="34" height="34" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="6" y="10" width="22" height="17" rx="3" fill="white" fill-opacity="0.92"/>
+          <rect x="11" y="7.5" width="2.5" height="5.5" rx="1.25" fill="white"/>
+          <rect x="20.5" y="7.5" width="2.5" height="5.5" rx="1.25" fill="white"/>
+          <rect x="6" y="10" width="22" height="5.5" rx="3" fill="white" fill-opacity="0.3"/>
+          <rect x="6" y="13" width="22" height="2.5" fill="white" fill-opacity="0.3"/>
+          <path d="M13 20.5 L16 23.5 L21 17.5" stroke="#FF6B35" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div><div class="sb-name">PeopleDesk</div><div class="sb-sub">Sushobhit · <span id="emp-branch-label"></span></div></div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">My leaves</div>
+      <button class="nav-item active" onclick="eTab('dashboard')" id="enav-dashboard">📊 Dashboard</button>
+      <button class="nav-item" onclick="eTab('apply')" id="enav-apply">✏️ Apply for leave</button>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Attendance</div>
+      <button class="nav-item" onclick="eTab('myatt')" id="enav-myatt">🕐 My Attendance</button>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Account</div>
+      <button class="nav-item" onclick="eTab('mypass')" id="enav-mypass">🔒 Change password</button>
+    </div>
+    <div class="sidebar-footer">
+      <div class="user-chip">
+        <div class="avatar" id="emp-avatar-chip"></div>
+        <div style="flex:1;min-width:0"><div class="user-chip-name" id="emp-chip-name"></div><div class="user-chip-role" id="emp-chip-role"></div></div>
+        <button class="logout-btn" onclick="logout()" title="Sign out">✕</button>
+      </div>
+    </div>
+  </nav>
+  <main class="main-content">
+    <div id="et-dashboard">
+      <div class="page-header"><div class="page-title" id="emp-hello">Welcome</div><div class="page-sub" id="emp-sub"></div></div>
+      <div class="metrics-grid" id="emp-metrics"></div>
+      <div class="two-col">
+        <div class="card">
+          <div class="card-header"><div class="card-title">PL breakdown</div></div>
+          <div id="emp-breakdown" style="padding:14px 16px"></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">Leave history</div></div>
+          <div style="overflow-x:auto"><table><thead><tr>
+            <th style="width:18%">From</th><th style="width:18%">To</th><th style="width:8%">Days</th>
+            <th style="width:14%">Month</th><th style="width:18%">Note</th><th style="width:9%">By</th><th style="width:15%">Status</th>
+          </tr></thead><tbody id="emp-hist"></tbody></table></div>
+        </div>
+      </div>
+    </div>
+    <div id="et-apply" style="display:none">
+      <div class="page-header"><div class="page-title">Apply for leave</div><div class="page-sub">Submit a paid leave request for admin approval</div></div>
+      <div style="max-width:480px">
+      <div class="card">
+        <div class="card-header"><div class="card-title">New leave application</div></div>
+        <div class="form-grid">
+          <div class="form-field"><label>From date</label><input type="date" id="el-from" onchange="updatePreview()"></div>
+          <div class="form-field"><label>To date</label><input type="date" id="el-to" onchange="updatePreview()"></div>
+        </div>
+        <div style="padding:0 16px 4px;display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div class="form-field"><label>Leave type</label><select id="el-halfday" onchange="updatePreview()" style="padding:7px 10px;border:0.5px solid var(--color-border-secondary);border-radius:8px;background:var(--color-background-primary);color:var(--color-text-primary);outline:none;width:100%"><option value="full">Full day(s)</option><option value="half">Half day (0.5 PL)</option></select></div>
+          <div class="form-field"><label>Reason / note (optional)</label><input type="text" id="el-note" placeholder="e.g. Family function, travel"></div>
+        </div>
+        <div id="el-preview" style="padding:8px 16px;font-size:13px"></div>
+        <div class="form-actions"><button class="btn btn-accent" onclick="applyLeave()">Submit application</button></div>
+      </div>
+      </div>
+    </div>
+    <div id="et-myatt" style="display:none">
+      <div class="page-header">
+        <div class="page-title">My Attendance</div>
+        <div class="page-sub" id="myatt-sub">Your attendance records uploaded by admin</div>
+      </div>
+      <div id="myatt-no-data" style="display:none">
+        <div class="card" style="padding:40px;text-align:center;color:var(--text2)">
+          <div style="font-size:40px;margin-bottom:12px">📋</div>
+          <div style="font-size:15px;font-weight:600;margin-bottom:6px">No attendance data yet</div>
+          <div style="font-size:13px">Ask your admin to upload the monthly attendance Excel. It will appear here automatically.</div>
+        </div>
+      </div>
+      <div id="myatt-content" style="display:none">
+        <!-- Summary chips -->
+        <div id="myatt-summary" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px"></div>
+        <!-- Month filter -->
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">
+          <div style="display:flex;align-items:center;gap:6px">
+            <span style="font-size:12px;color:var(--text2);font-weight:500">Month</span>
+            <select class="filter-select" id="myatt-filter-month" onchange="renderMyAttTable()">
+              <option value="">All months</option>
+            </select>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px">
+            <span style="font-size:12px;color:var(--text2);font-weight:500">Status</span>
+            <select class="filter-select" id="myatt-filter-status" onchange="renderMyAttTable()">
+              <option value="">All</option>
+              <option value="Present">Present</option>
+              <option value="Absent">Absent</option>
+              <option value="Half Day">Half Day</option>
+              <option value="On Leave">On Leave</option>
+              <option value="PL (Paid Leave)">PL (Paid Leave)</option>
+              <option value="LOP (Loss of Pay)">LOP (Loss of Pay)</option>
+              <option value="Week Off">Week Off</option>
+              <option value="Late In">Late In</option>
+              <option value="Early Out">Early Out</option>
+              <option value="Missing Out">Missing Out</option>
+            </select>
+          </div>
+        </div>
+        <!-- Table -->
+        <div class="card" style="overflow-x:auto">
+          <table>
+            <thead><tr>
+              <th style="width:12%">Date</th>
+              <th style="width:10%">Day</th>
+              <th style="width:10%">Shift</th>
+              <th style="width:10%">In</th>
+              <th style="width:10%">Out</th>
+              <th style="width:14%">Hours</th>
+              <th style="width:15%">Status</th>
+              <th style="width:13%">Flags</th>
+              <th style="width:10%">Action</th>
+            </tr></thead>
+            <tbody id="myatt-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div id="et-mypass" style="display:none">
+      <div class="page-header"><div class="page-title">Change password</div><div class="page-sub">Update your account password</div></div>
+      <div style="max-width:400px">
+      <div class="card">
+        <div class="card-header"><div class="card-title">New password</div></div>
+        <div style="padding:14px 16px;display:flex;flex-direction:column;gap:10px">
+          <div class="form-field"><label>Current password</label><input type="password" id="ep-cur" placeholder="Your current password"></div>
+          <div class="form-field"><label>New password</label><input type="password" id="ep-new" placeholder="Choose a new password"></div>
+          <div class="form-field"><label>Confirm new password</label><input type="password" id="ep-conf" placeholder="Repeat new password"></div>
+          <button class="btn btn-accent" onclick="changeEmpPass()">Update password</button>
+        </div>
+      </div>
+      </div>
+    </div>
+  </main>
+</div>
+</div>
+
+<script>
+const MN=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const now=new Date(),CY=now.getFullYear(),CM=now.getMonth();
+
+const SUPABASE_URL = "https://fqmzsyifzjldkupznvxe.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_UlzZFjVi_tAGJoTePOI04A_9vm82kND";
+
+const supabaseClient = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_ANON_KEY
+);
+
+const DEFAULT_DATA={
+  employees:[
+    {id:1,name:"Vrushali Kadam",branch:"Kalyan",desig:"Store Manager",plStart:"2026-04",cf:14},
+  ],
+  leaves:[],regularizations:[],nextId:20,nextLeaveId:1,nextRegId:1
+};
+
+let S=JSON.parse(JSON.stringify(DEFAULT_DATA));
+let openEditId=null;
+let session=null;
+let saveTimer=null;
+
+function initials(n){return n.trim().split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase()}
+function plMonths(e){if(!e.plStart)return 0;const[sy,sm]=e.plStart.split("-").map(Number);return Math.max(0,(CY-sy)*12+(CM-(sm-1)))}
+function totalCredited(e){return plMonths(e)*2}
+function usedApproved(eid){return S.leaves.filter(l=>l.empId===eid&&l.status==="Approved").reduce((s,l)=>s+l.days,0)}
+function balance(e){return Math.max(0,(e.cf||0)+totalCredited(e)-usedApproved(e.id))}
+function pendingDays(eid){return S.leaves.filter(l=>l.empId===eid&&l.status==="Pending").reduce((s,l)=>s+l.days,0)}
+function availBal(e){return Math.max(0,balance(e)-pendingDays(e.id))}
+function parseDate(s){const[y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d);}
+function workDays(f,t){let c=0,d=new Date(f.getTime());while(d<=t){c++;d.setDate(d.getDate()+1);}return c}
+function fmtD(s){if(!s)return"—";const d=new Date(s);return`${d.getDate()} ${MN[d.getMonth()]} ${String(d.getFullYear()).slice(2)}`}
+function fmtM(s){if(!s)return"—";const[y,m]=s.split("-");return`${MN[parseInt(m)-1]} ${y}`}
+function monthOf(s){const d=new Date(s);return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`}
+
+async function loadData() {
+  try {
+    updateStorageStatus("● Loading...");
+
+    const [
+      employeesRes,
+      leavesRes,
+      regsRes,
+      attendanceRes
+    ] = await Promise.all([
+      supabaseClient.from("employees").select("*").order("id"),
+      supabaseClient.from("leaves").select("*").order("id"),
+      supabaseClient.from("regularizations").select("*").order("id"),
+      supabaseClient.from("attendance").select("*").order("date")
+    ]);
+
+    if (employeesRes.error) throw employeesRes.error;
+    if (leavesRes.error) throw leavesRes.error;
+    if (regsRes.error) throw regsRes.error;
+    if (attendanceRes.error) throw attendanceRes.error;
+
+    const employees    = (employeesRes.data    || []).map(e=>({...e, plStart:e.pl_start}));
+    const leaves       = (leavesRes.data       || []).map(l=>({...l, empId:l.emp_id, from:l.from_date, to:l.to_date, halfDay:l.half_day, appliedOn:l.applied_on, isLOP:l.is_lop}));
+    const regularizations = (regsRes.data     || []).map(r=>({...r, empId:r.emp_id, decidedOn:r.decided_on, appliedOn:r.applied_on, newIn:r.new_in, newOut:r.new_out, empName:r.emp_name, wasIn:r.was_in, wasOut:r.was_out}));
+    // Restore attData from Supabase attendance rows
+    const empById = Object.fromEntries((employeesRes.data||[]).map(e=>[e.id, e.name]));
+    const _nonWorkKw = ['weekoff','week off','leave','ign','mrm','holiday','off','pl','lop'];
+    const _isNonWork = s => s ? _nonWorkKw.some(k=>s.toLowerCase().includes(k)) : false;
+    attData = (attendanceRes.data || []).map(a=>({
+      id: a.id,
+      emp_id: a.emp_id,
+      name: empById[a.emp_id] || '',
+      date: a.date,
+      day: a.day || '',
+      shift: a.shift || '',
+      inTime: a.in_time || '',
+      outTime: a.out_time || '',
+      nonWork: _isNonWork(a.shift),
+    }));
+    const attendance = [];
+
+    S = {
+      employees,
+      leaves,
+      regularizations,
+      attendance,
+      nextId:     (employees.length    ? Math.max(...employees.map(e=>e.id||0))    : 0) + 1,
+      nextLeaveId:(leaves.length       ? Math.max(...leaves.map(l=>l.id||0))       : 0) + 1,
+      nextRegId:  (regularizations.length ? Math.max(...regularizations.map(r=>r.id||0)) : 0) + 1,
+    };
+
+    updateStorageStatus("● Synced");
+  } catch (err) {
+    console.error(err);
+    showAlert("Failed to load data from Supabase", "e");
+    updateStorageStatus("⚠ Load failed");
+  }
+
+  document.getElementById("loading-msg").style.display = "none";
+  document.getElementById("login-form").style.display = "block";
+}
+
+let isSaving=false;
+
+// Map S objects back to snake_case DB columns before upserting
+function toDbEmployee(e){
+  return {id:e.id,name:e.name,branch:e.branch,desig:e.desig,pl_start:e.plStart||e.pl_start||null,cf:e.cf,employee_code:e.employee_code,auth_email:e.auth_email,auth_uid:e.auth_uid,is_admin:e.is_admin};
+}
+function toDbLeave(l){
+  return {id:l.id,emp_id:l.empId||l.emp_id,from_date:l.from||l.from_date,to_date:l.to||l.to_date,days:l.days,month:l.month,note:l.note,applied_on:l.appliedOn||l.applied_on||null,status:l.status,source:l.source,half_day:l.halfDay||l.half_day||false,is_lop:l.isLOP||l.is_lop||false};
+}
+function toDbReg(r){
+  return {id:r.id,emp_id:r.empId||r.emp_id,date:r.date,new_in:r.newIn||r.new_in||null,new_out:r.newOut||r.new_out||null,reason:r.reason||null,status:r.status,applied_on:r.appliedOn||r.applied_on||null,decided_on:r.decidedOn||r.decided_on||null,emp_name:r.empName||r.emp_name||null,was_in:r.wasIn||r.was_in||null,was_out:r.wasOut||r.was_out||null};
+}
+function toDbAttendance(a){
+  return {emp_id:a.emp_id,date:a.date,day:a.day||null,shift:a.shift||null,in_time:a.inTime||null,out_time:a.outTime||null,uploaded_at:new Date().toISOString()};
+}
+
+async function saveData() {
+  if (isSaving) return;
+
+  isSaving = true;
+
+  const ind = document.getElementById("save-indicator");
+  ind.style.display = "flex";
+
+  try {
+    // Resolve emp_id for any attData rows that only have a name (from Excel upload)
+    const empByName = Object.fromEntries(S.employees.map(e=>[e.name.trim().toLowerCase(), e.id]));
+    for(const a of attData){
+      if(!a.emp_id && a.name) a.emp_id = empByName[a.name.trim().toLowerCase()] || null;
+    }
+    const attToSave = attData.filter(a=>a.emp_id && a.date);
+    const unmatched = attData.filter(a=>!a.emp_id && a.name).map(a=>a.name);
+    if(unmatched.length){
+      const unique=[...new Set(unmatched)];
+      console.warn("Attendance rows with no matching employee (not saved):", unique);
+    }
+
+    // Delete Supabase leaves whose IDs are no longer in S.leaves (handles deletions)
+    const leaveIds = S.leaves.map(l=>l.id).filter(Boolean);
+    const {data: dbLeaves} = await supabaseClient.from("leaves").select("id");
+    const toDeleteLeaveIds = (dbLeaves||[]).map(l=>l.id).filter(id=>!leaveIds.includes(id));
+    if(toDeleteLeaveIds.length){
+      await supabaseClient.from("leaves").delete().in("id", toDeleteLeaveIds);
+    }
+
+    const results = await Promise.all([
+      supabaseClient.from("employees").upsert(S.employees.map(toDbEmployee), { onConflict: "id" }),
+      S.leaves.length ? supabaseClient.from("leaves").upsert(S.leaves.map(toDbLeave), { onConflict: "id" }) : Promise.resolve({error:null}),
+      supabaseClient.from("regularizations").upsert(S.regularizations.map(toDbReg), { onConflict: "id" }),
+      attToSave.length ? supabaseClient.from("attendance").upsert(attToSave.map(toDbAttendance), { onConflict: "emp_id,date" }) : Promise.resolve({error:null})
+    ]);
+
+    const errors = results.map((r,i)=>r.error?["employees","leaves","regularizations","attendance"][i]+": "+r.error.message:null).filter(Boolean);
+    if(errors.length){
+      console.error("Save errors:", errors);
+      updateStorageStatus("⚠ Save failed");
+      showAlert("Save error: "+errors.join("; "),"e");
+    } else {
+      updateStorageStatus("● Synced");
+    }
+  } catch (err) {
+    console.error(err);
+    updateStorageStatus("⚠ Save failed");
+    showAlert("Supabase save failed: "+err.message, "e");
+  }
+
+  ind.style.display = "none";
+  isSaving = false;
+}
+
+function scheduleSave(){
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(saveData,800);
+}
+
+function updateStorageStatus(msg){
+  const el=document.getElementById('storage-status');
+  if(el)el.textContent=msg;
+}
+
+function showAlert(msg,type){
+  const el=document.getElementById("galert");
+  el.className=`alert-bar alert-${type}`;el.textContent=msg;el.style.display="flex";
+  clearTimeout(el._t);el._t=setTimeout(()=>el.style.display="none",3200);
+}
+
+async function doLogin() {
+  const employeeCode =
+    document.getElementById("lg-emp").value.trim().toUpperCase();
+
+  const password =
+    document.getElementById("lg-pass").value.trim();
+
+  if (!employeeCode || !password) {
+    showAlert("Enter employee code and password", "e");
+    return;
+  }
+
+  try {
+    // Look up the real auth email for this employee code
+    const { data: emailData, error: emailErr } =
+      await supabaseClient.rpc("get_auth_email", { p_employee_code: employeeCode });
+
+    if (emailErr || !emailData) {
+      showAlert("Employee code not found", "e");
+      return;
+    }
+
+    const { data, error } =
+      await supabaseClient.auth.signInWithPassword({
+        email: emailData,
+        password
+      });
+
+    if (error) throw error;
+
+    const authUserId = data.user.id;
+
+    const { data: employee, error: empErr } =
+      await supabaseClient
+        .from("employees")
+        .select("*")
+        .eq("auth_uid", authUserId)
+        .single();
+
+    if (empErr) throw empErr;
+
+    if (!employee) {
+      showAlert("Employee record not linked", "e");
+      return;
+    }
+
+    session = {
+      role: employee.is_admin ? "admin" : "employee",
+      empId: employee.id,
+      authUid: authUserId
+    };
+
+    await loadData();
+
+    if (employee.is_admin) {
+      showScreen("sc-admin");
+      renderAdmin();
+    } else {
+      showScreen("sc-employee");
+      renderEmployee();
+    }
+
+  } catch (err) {
+    console.error(err);
+    showAlert("Invalid employee code or password", "e");
+  }
+}
+function logout(){session=null;document.getElementById("lg-pass").value="";showScreen("sc-login")}
+function showScreen(id){["sc-login","sc-admin","sc-employee"].forEach(s=>document.getElementById(s).className="screen"+(s===id?" active":""));}
+
+function aTab(t){
+  ["overview","employees","leaves","attendance","settings","empprofile"].forEach(tab=>{
+    document.getElementById("at-"+tab).style.display=tab===t?"":"none";
+    const n=document.getElementById("nav-"+tab);if(n)n.className="nav-item"+(tab===t?" active":"");
+  });
+  if(t==="overview"){renderAdmin();}
+  if(t==="leaves"){populateMlEmps();populateAdmFilters();renderAdmLeaves();}
+  if(t==="attendance"){
+    renderRegRequests();
+    if(attData.length){
+      document.getElementById("att-clear-btn").style.display="";
+      document.getElementById("att-results").style.display="";
+      renderAttTable();
+    }
+    populateOvMonthFilter();
+  }
+  if(t==="employees"){openEditId=null;renderAdmEmpTable();}
+  if(t==="settings")renderSettingsTab();
+}
+
+let profileEmpId=null;
+
+function viewEmpProfile(empId){
+  profileEmpId=empId;
+  const emp=S.employees.find(e=>e.id===empId);
+  if(!emp)return;
+  // Show nav item with employee name
+  const navBtn=document.getElementById("nav-empprofile");
+  const navLabel=document.getElementById("nav-empprofile-label");
+  navBtn.style.display="";
+  navLabel.textContent=emp.name.split(" ")[0];
+  aTab("empprofile");
+  renderEmpProfile(emp);
+}
+
+function renderEmpProfile(emp){
+  document.getElementById("ep-title").textContent=emp.name;
+  document.getElementById("ep-sub").textContent=emp.branch+" · "+emp.desig;
+
+  // Metrics
+  const tc=totalCredited(emp),cf=emp.cf||0,ud=usedApproved(emp.id),bal=balance(emp),pend=pendingDays(emp.id),avail=availBal(emp);
+  document.getElementById("ep-metrics").innerHTML=`
+    <div class="metric-card"><div class="metric-label">Carry forward</div><div class="metric-value" style="color:var(--green)">${cf}</div><div class="metric-sub">Opening balance</div></div>
+    <div class="metric-card"><div class="metric-label">Accrued</div><div class="metric-value" style="color:var(--accent)">${tc}</div><div class="metric-sub">${plMonths(emp)} months × 2</div></div>
+    <div class="metric-card"><div class="metric-label">Used (approved)</div><div class="metric-value" style="color:var(--amber)">${ud}</div><div class="metric-sub">Approved leaves</div></div>
+    <div class="metric-card"><div class="metric-label">Available balance</div><div class="metric-value" style="color:var(--green)">${bal}</div><div class="metric-sub">${pend?"⏳ "+pend+" pending":"No pending"}</div></div>`;
+
+  // PL Breakdown
+  const total=cf+tc,pct=total>0?Math.round((bal/total)*100):0;
+  document.getElementById("ep-breakdown").innerHTML=`
+    <div class="info-row"><span class="info-label">Carry forward (opening)</span><span style="color:var(--green);font-weight:600">+ ${cf} PL</span></div>
+    ${emp.plStart?`<div class="info-row"><span class="info-label">PL active from</span><span>${fmtM(emp.plStart)}</span></div>
+    <div class="info-row"><span class="info-label">Accrued (${plMonths(emp)} months × 2)</span><span style="color:var(--accent);font-weight:600">+ ${tc} PL</span></div>`
+    :`<div class="info-row"><span class="info-label">Monthly accrual</span><span style="color:var(--color-text-tertiary)">Not activated</span></div>`}
+    <div class="info-row"><span class="info-label">Total earned</span><span style="font-weight:500">${total} PL</span></div>
+    <div class="info-row"><span class="info-label">Used (approved)</span><span style="color:var(--amber);font-weight:600">− ${ud} PL</span></div>
+    ${pend?`<div class="info-row"><span class="info-label">Pending (not yet deducted)</span><span style="color:var(--amber)">⏳ ${pend} PL</span></div>`:""}
+    <div class="info-row" style="border:none"><span style="font-weight:500">Available balance</span><span style="font-weight:700;color:var(--green);font-size:16px">${bal} PL</span></div>
+    <div class="prog-track"><div class="prog-fill" style="width:${pct}%"></div></div>
+    <div style="font-size:11px;color:var(--color-text-tertiary)">${pct}% of total earned remaining</div>`;
+
+  // Month-by-month usage
+  const empLeaves=S.leaves.filter(l=>l.empId===emp.id);
+  const byMonth={};
+  empLeaves.forEach(l=>{
+    const m=l.month||monthOf(l.from);
+    if(!byMonth[m])byMonth[m]={approved:0,pending:0,rejected:0,notes:[]};
+    if(l.status==="Approved")byMonth[m].approved+=l.days;
+    else if(l.status==="Pending")byMonth[m].pending+=l.days;
+    else byMonth[m].rejected+=l.days;
+    if(l.note)byMonth[m].notes.push(l.note);
+  });
+  const months=Object.keys(byMonth).sort().reverse();
+  document.getElementById("ep-monthly").innerHTML=months.length?months.map(m=>{
+    const d=byMonth[m];
+    const parts=[];
+    if(d.approved)parts.push(`<span class="badge bg-green">${d.approved}d approved</span>`);
+    if(d.pending)parts.push(`<span class="badge bg-amber">${d.pending}d pending</span>`);
+    if(d.rejected)parts.push(`<span class="badge bg-red">${d.rejected}d rejected</span>`);
+    return`<tr><td style="font-weight:500">${fmtM(m)}</td><td>${d.approved+d.pending}</td><td>${parts.join(" ")}</td><td style="font-size:12px;color:var(--color-text-secondary)">${d.notes.slice(0,2).join(", ")||"—"}</td></tr>`;
+  }).join(""):`<tr><td colspan="4"><div class="empty-state"><p>No leave records yet</p></div></td></tr>`;
+
+  renderEpHistory();
+}
+
+function renderEpHistory(){
+  if(!profileEmpId)return;
+  const statF=document.getElementById("ep-filter-stat")?.value||"";
+  const emp=S.employees.find(e=>e.id===profileEmpId);
+  let leaves=S.leaves.filter(l=>l.empId===profileEmpId);
+  if(statF)leaves=leaves.filter(l=>l.status===statF);
+  leaves=[...leaves].reverse();
+  document.getElementById("ep-hist").innerHTML=leaves.length?leaves.map(l=>{
+    const cls=l.status==="Approved"?"bg-green":l.status==="Rejected"?"bg-red":"bg-amber";
+    const src=l.source==="admin"?`<span class="chip-admin">Admin</span>`:`<span class="chip-emp">Emp</span>`;
+    return`<tr>
+      <td>${fmtD(l.from)}</td><td>${fmtD(l.to)}</td><td>${l.days}</td>
+      <td style="font-size:12px">${fmtM(l.month||monthOf(l.from))}</td>
+      <td style="font-size:12px;color:var(--color-text-secondary)">${l.note||"—"}</td>
+      <td>${src}</td>
+      <td style="font-size:12px;color:var(--color-text-secondary)">${l.appliedOn||"—"}</td>
+      <td><span class="badge ${cls}">${l.status}</span></td>
+    </tr>`;
+  }).join(""):`<tr><td colspan="8"><div class="empty-state"><p>No leave history found</p></div></td></tr>`;
+}
+
+function updateRegBadge(){
+  if(!S.regularizations) S.regularizations=[];
+  const n = S.regularizations.filter(r=>r.status==="Pending").length;
+  const b = document.getElementById("reg-pending-badge");
+  if(b){ b.textContent=n; b.style.display=n?"":"none"; }
+}
+
+function populateOvMonthFilter(){
+  const sel=document.getElementById('ov-month-filter');
+  if(!sel)return;
+  const months=[...new Set(attData.map(r=>r.date?r.date.slice(0,7):'').filter(Boolean))].sort().reverse();
+  const curVal=sel.value;
+  sel.innerHTML='<option value="">Current month</option>'+months.map(m=>{const[y,mo]=m.split('-');return`<option value="${m}">${MN[parseInt(mo)-1]} ${y}</option>`;}).join('');
+  if(curVal&&months.includes(curVal))sel.value=curVal;
+}
+
+function populatePlStartOptions(){
+  const selM = document.getElementById("ae-plstart-m");
+  const selY = document.getElementById("ae-plstart-y");
+  if(!selM||!selY) return;
+  selM.innerHTML = ['<option value="">Month</option>',
+    ...MN.map((m,i)=>`<option value="${String(i+1).padStart(2,"0")}">${m}</option>`)
+  ].join("");
+  const yr = new Date().getFullYear();
+  selY.innerHTML = ['<option value="">Year</option>',
+    ...[yr-1,yr,yr+1].map(y=>`<option value="${y}">${y}</option>`)
+  ].join("");
+}
+
+function renderAdmin(){
+  updateRegBadge();
+  document.getElementById("adm-date").textContent=`${MN[CM]} ${CY} · Sushobhit CaratLane`;
+  populateOvMonthFilter();
+  populatePlStartOptions();
+  renderAdmMetrics();renderAdmAttMetrics();renderAdmEmpOv();renderAdmPending();renderOvRegRequests();
+}
+
+function renderAdmMetrics(){
+  const branchF=document.getElementById('ov-branch-filter')?.value||'';
+  let emps=S.employees;
+  if(branchF)emps=emps.filter(e=>e.branch===branchF);
+  const empIds=new Set(emps.map(e=>e.id));
+  const total=emps.length,active=emps.filter(e=>e.plStart).length;
+
+  const monthF=document.getElementById('ov-month-filter')?.value||'';
+  const thisUsed=S.leaves.filter(l=>{
+    if(!empIds.has(l.empId)||l.status!=="Approved")return false;
+    const d=new Date(l.from);
+    if(monthF)return l.month===monthF||(l.month===undefined&&d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')===monthF);
+    return d.getMonth()===CM&&d.getFullYear()===CY;
+  }).reduce((s,l)=>s+l.days,0);
+
+  const totalBal=emps.reduce((s,e)=>s+balance(e),0);
+  const pend=S.leaves.filter(l=>empIds.has(l.empId)&&l.status==="Pending").length;
+  const pb=document.getElementById("pending-badge");
+  pend>0?(pb.textContent=pend,pb.style.display=""):(pb.style.display="none");
+  document.getElementById("adm-metrics").innerHTML=`
+    <div class="metric-card"><div class="metric-label">Total employees</div><div class="metric-value" style="color:var(--purple)">${total}</div><div class="metric-sub">${active} with PL active</div></div>
+    <div class="metric-card"><div class="metric-label">PL used this month</div><div class="metric-value" style="color:var(--amber)">${thisUsed}</div><div class="metric-sub">${monthF?fmtM(monthF):MN[CM]+' '+CY}</div></div>
+    <div class="metric-card"><div class="metric-label">Pending approvals</div><div class="metric-value" style="color:var(--red)">${pend}</div><div class="metric-sub">Awaiting review</div></div>
+    <div class="metric-card"><div class="metric-label">Total PL balance</div><div class="metric-value">${totalBal}</div><div class="metric-sub">Across all employees</div></div>`;
+}
+
+function renderAdmAttMetrics(){
+  const attMetricsEl=document.getElementById('adm-att-metrics');
+  const flagsEl=document.getElementById('ov-att-flags');
+  const flagChipsEl=document.getElementById('ov-att-flag-chips');
+  const breakdownCard=document.getElementById('ov-att-breakdown-card');
+  const attMonthLabel=document.getElementById('ov-att-month-label');
+
+  if(!attData.length){
+    attMetricsEl.innerHTML=`<div style="grid-column:1/-1;padding:18px;background:var(--surface);border-radius:var(--radius);border:1px dashed var(--border2);text-align:center;color:var(--text3);font-size:12px">
+      No attendance data uploaded yet — <button onclick="aTab('attendance')" class="btn btn-sm" style="margin-left:6px">Upload Excel →</button>
+    </div>`;
+    flagsEl.style.display='none';
+    breakdownCard.style.display='none';
+    attMonthLabel.textContent='';
+    return;
+  }
+
+  const branchF=document.getElementById('ov-branch-filter')?.value||'';
+  const monthF=document.getElementById('ov-month-filter')?.value||'';
+
+  // Determine target month string
+  const targetMonth=monthF||`${CY}-${String(CM+1).padStart(2,'0')}`;
+  const targetLabel=fmtM(targetMonth);
+  attMonthLabel.textContent=targetLabel;
+
+  // Filter by branch (match employee records)
+  let rows=attData.filter(r=>r.date&&r.date.startsWith(targetMonth));
+  if(branchF){
+    const branchEmps=new Set(S.employees.filter(e=>e.branch===branchF).map(e=>e.name.trim().toLowerCase()));
+    rows=rows.filter(r=>{
+      const n=(r.name||'').trim().toLowerCase();
+      return [...branchEmps].some(en=>en===n||en.startsWith(n.split(' ')[0])||n.startsWith(en.split(' ')[0]));
+    });
+  }
+
+  if(!rows.length){
+    attMetricsEl.innerHTML=`<div style="grid-column:1/-1;padding:14px 18px;background:var(--surface);border-radius:var(--radius);border:1px dashed var(--border2);color:var(--text3);font-size:12px">No attendance records for ${targetLabel}${branchF?' · '+branchF:''}.</div>`;
+    flagsEl.style.display='none';
+    breakdownCard.style.display='none';
+    return;
+  }
+
+  const classified=rows.map(r=>({...r,...classifyRow(r)}));
+
+  const present   =classified.filter(r=>r.status==='Present').length;
+  const absent    =classified.filter(r=>r.status==='Absent').length;
+  const halfDay   =classified.filter(r=>r.status==='Half Day').length;
+  const weekOff   =classified.filter(r=>r.status==='Week Off').length;
+  const onLeave   =classified.filter(r=>['On Leave','PL (Paid Leave)','LOP (Loss of Pay)'].includes(r.status)).length;
+  const lateIn    =classified.filter(r=>r.flags&&r.flags.some(f=>f.includes('Late In'))).length;
+  const earlyOut  =classified.filter(r=>r.flags&&r.flags.includes('Early Out')).length;
+  const missingOut=classified.filter(r=>r.flags&&r.flags.includes('Missing Out')).length;
+  const pendingReg=S.regularizations?S.regularizations.filter(r=>r.status==='Pending').length:0;
+  const totalWorked=classified.filter(r=>r.hoursM!==null&&r.hoursM>0);
+  const avgHours=totalWorked.length?Math.round(totalWorked.reduce((s,r)=>s+r.hoursM,0)/totalWorked.length):null;
+
+  attMetricsEl.innerHTML=`
+    <div class="metric-card" style="border-top:3px solid var(--green)">
+      <div class="metric-label">Present</div>
+      <div class="metric-value" style="color:var(--green)">${present}</div>
+      <div class="metric-sub">${rows.length} total records</div>
+    </div>
+    <div class="metric-card" style="border-top:3px solid var(--purple)">
+      <div class="metric-label">Half Days</div>
+      <div class="metric-value" style="color:var(--purple)">${halfDay}</div>
+      <div class="metric-sub">PL deducted</div>
+    </div>
+    <div class="metric-card" style="border-top:3px solid var(--blue)">
+      <div class="metric-label">On Leave / LOP</div>
+      <div class="metric-value" style="color:var(--blue)">${onLeave}</div>
+      <div class="metric-sub">Leave days</div>
+    </div>
+    <div class="metric-card" style="border-top:3px solid var(--amber)">
+      <div class="metric-label">Avg Hours/Day</div>
+      <div class="metric-value" style="color:var(--amber)">${avgHours!==null?minsToHHMM(avgHours):'—'}</div>
+      <div class="metric-sub">${totalWorked.length} days tracked</div>
+    </div>
+    <div class="metric-card" style="border-top:3px solid var(--accent);cursor:pointer" onclick="aTab('attendance')">
+      <div class="metric-label">Pending Reg.</div>
+      <div class="metric-value" style="color:var(--accent)">${pendingReg}</div>
+      <div class="metric-sub">Awaiting review</div>
+    </div>`;
+
+  // Flag chips
+  const flagItems=[
+    lateIn    && {icon:'⏰',label:`Late In`,count:lateIn,   bg:'var(--amber-soft)',col:'#A06600'},
+    earlyOut  && {icon:'🚪',label:`Early Out`,count:earlyOut, bg:'#FEF0FF',col:'#7A2D9A'},
+    missingOut&& {icon:'❓',label:`Missing Out`,count:missingOut,bg:'var(--blue-soft)',col:'#2065A8'},
+  ].filter(Boolean);
+
+  if(flagItems.length){
+    flagsEl.style.display='';
+    flagChipsEl.innerHTML=`<span style="font-size:11px;color:var(--text3);font-weight:600;align-self:center">Flags this month:</span>`+
+      flagItems.map(f=>`<span style="display:inline-flex;align-items:center;gap:5px;background:${f.bg};color:${f.col};padding:5px 12px;border-radius:99px;font-size:12px;font-weight:600">${f.icon} ${f.label} <strong>${f.count}</strong></span>`).join('');
+  } else {
+    flagsEl.style.display='none';
+  }
+
+  // Employee-level breakdown table
+  const empNames=[...new Set(classified.map(r=>(r.name||'').trim()))].filter(Boolean);
+  const breakdownRows=empNames.map(name=>{
+    const empRows=classified.filter(r=>(r.name||'').trim()===name);
+    const ep=empRows.filter(r=>r.status==='Present').length;
+    const eLOP=empRows.filter(r=>r.status==='LOP (Loss of Pay)').length;
+    const ew=empRows.filter(r=>r.status==='Week Off').length;
+    const ePL=empRows.filter(r=>r.status==='PL (Paid Leave)'||r.status==='On Leave').length;
+    const eh=empRows.filter(r=>r.status==='Half Day').length;
+    const eLate=empRows.filter(r=>r.flags&&r.flags.some(f=>f.includes('Late In'))).length;
+    const worked=empRows.filter(r=>r.hoursM!==null&&r.hoursM>0);
+    const avgH=worked.length?Math.round(worked.reduce((s,r)=>s+r.hoursM,0)/worked.length):null;
+    // Find matching employee record for profile link
+    const matchEmp=S.employees.find(e=>{
+      const en=e.name.trim().toLowerCase(),nn=name.toLowerCase();
+      return en===nn||en.startsWith(nn)||nn.startsWith(en.split(' ')[0]);
+    });
+    const nameCell=matchEmp
+      ?`<div style="font-weight:500;cursor:pointer;color:#534AB7" onclick="viewEmpProfile(${matchEmp.id})">${name}</div>`
+      :`<div style="font-weight:500">${name}</div>`;
+    return `<tr>
+      <td>${nameCell}</td>
+      <td><span class="badge bg-green">${ep}</span></td>
+      <td><span class="badge ${eLOP>0?'bg-red':'bg-gray'}">${eLOP}</span></td>
+      <td><span class="badge bg-gray">${ew}</span></td>
+      <td><span class="badge ${ePL>0?'bg-teal':'bg-gray'}">${ePL}</span></td>
+      <td><span class="badge bg-purple">${eh}</span></td>
+      <td>${eLate>0?`<span class="badge bg-amber">${eLate}</span>`:'<span style="color:var(--text3)">—</span>'}</td>
+      <td style="font-weight:500;color:${avgH!==null?(avgH>=540?'var(--green)':'var(--amber)'):'var(--text3)'}">${avgH!==null?minsToHHMM(avgH):'—'}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('ov-att-breakdown-tbody').innerHTML=breakdownRows||`<tr><td colspan="8"><div class="empty-state"><p>No breakdown available</p></div></td></tr>`;
+  document.getElementById('ov-att-breakdown-month').textContent=`· ${targetLabel}${branchF?' · '+branchF:''}`;
+  breakdownCard.style.display='';
+}
+function renderAdmEmpOv(){
+  document.getElementById("adm-emp-ov").innerHTML=S.employees.map(e=>{
+    const b=balance(e),cls=b>=4?"bg-green":b>=1?"bg-amber":"bg-red";
+    const lbl=e.plStart?`<span class="badge ${cls}">${b} PL</span>`:`<span class="badge bg-gray">CF: ${e.cf}</span>`;
+    return`<tr><td><div style="font-weight:500;cursor:pointer;color:#534AB7" onclick="viewEmpProfile(${e.id})" title="View profile">${e.name}</div><div style="font-size:11px;color:var(--color-text-secondary)">${e.desig}</div></td><td><span class="badge bg-blue">${e.branch}</span></td><td>${lbl}</td></tr>`;
+  }).join("");
+}
+function renderAdmPending(){
+  const pend=S.leaves.filter(l=>l.status==="Pending");
+  document.getElementById("pending-count").textContent=pend.length;
+  document.getElementById("adm-pending").innerHTML=pend.length?pend.map(l=>{
+    const emp=S.employees.find(e=>e.id===l.empId);
+    return`<tr><td><div style="font-weight:500">${emp?emp.name.split(" ")[0]:"?"}</div><div style="font-size:11px;color:var(--color-text-secondary)">${fmtD(l.from)} – ${fmtD(l.to)}</div></td><td><span class="badge bg-amber">${l.days}d</span></td><td><button class="btn btn-approve btn-sm" onclick="updateLeave(${l.id},'Approved')">Approve</button> <button class="btn btn-danger btn-sm" onclick="updateLeave(${l.id},'Rejected')">Reject</button></td></tr>`;
+  }).join(""):`<tr><td colspan="3"><div class="empty-state"><p style="font-size:24px;opacity:.3">✓</p><p>No pending requests</p></div></td></tr>`;
+}
+
+function renderAdmEmpTable(){
+  const branchF=document.getElementById("emp-filter-branch")?.value||"";
+  let emps=S.employees;
+  if(branchF)emps=emps.filter(e=>e.branch===branchF);
+  let html="";
+  emps.forEach(e=>{
+    const b=balance(e),cls=b>=4?"bg-green":b>=1?"bg-amber":"bg-red",isOpen=openEditId===e.id;
+    html+=`<tr>
+      <td><div style="display:flex;align-items:center;gap:8px"><div class="avatar" style="width:26px;height:26px;font-size:10px">${initials(e.name)}</div><div style="font-weight:500">${e.name}</div></div></td>
+      <td><span class="badge bg-blue">${e.branch}</span></td>
+      <td style="font-size:12px;color:var(--color-text-secondary)">${e.desig}</td>
+      <td>${e.plStart?`<span class="badge bg-purple">${fmtM(e.plStart)}</span>`:`<span class="badge bg-gray">—</span>`}</td>
+      <td><span class="badge bg-teal">${e.cf}</span></td>
+      <td><span class="badge ${cls}">${b} PL</span></td>
+      <td><button class="btn btn-sm" style="background:#EEF;color:#534AB7;border-color:#C5C0F0" onclick="viewEmpProfile(${e.id})">📋</button> <button class="btn btn-sm" onclick="toggleEdit(${e.id})">${isOpen?"Close":"Edit"}</button> <button class="btn btn-sm btn-danger" onclick="removeEmp(${e.id})">✕</button></td>
+    </tr>
+    <tr id="edit-row-${e.id}" style="display:${isOpen?"":"none"}">
+      <td colspan="7" class="edit-expanded" style="padding:0"><div class="edit-inner">
+        <div class="edit-grid">
+          <div class="edit-field"><label>Full name</label><input class="edit-input" id="ei-name-${e.id}" value="${e.name}"></div>
+          <div class="edit-field"><label>Branch</label><select class="edit-input" id="ei-branch-${e.id}">${["Kalyan","Dombivali","Ambernath"].map(b=>`<option${b===e.branch?" selected":""}>${b}</option>`).join("")}</select></div>
+          <div class="edit-field"><label>Designation</label><select class="edit-input" id="ei-desig-${e.id}">${["Store Manager","Jewellery Consultant","Calling Executive"].map(d=>`<option${d===e.desig?" selected":""}>${d}</option>`).join("")}</select></div>
+          <div class="edit-field"><label>New password</label><input class="edit-input" id="ei-pass-${e.id}" placeholder="Leave blank to keep unchanged"></div>
+        </div>
+        <div class="edit-grid-3">
+          <div class="edit-field"><label>PL start month</label><input class="edit-input" id="ei-plstart-${e.id}" value="${e.plStart||""}" placeholder="e.g. 2024-04"></div>
+          <div class="edit-field"><label>Carry forward PL</label><input class="edit-input" id="ei-cf-${e.id}" type="number" min="0" step="0.5" value="${e.cf}"></div>
+          <div style="display:flex;align-items:flex-end;gap:8px"><button class="btn btn-accent" onclick="saveEdit(${e.id})">Save</button><button class="btn" onclick="toggleEdit(${e.id})">Cancel</button></div>
+        </div>
+      </div></td>
+    </tr>`;
+  });
+  document.getElementById("adm-emp-tbl").innerHTML=html||`<tr><td colspan="7"><div class="empty-state"><p>No employees found</p></div></td></tr>`;
+}
+function toggleEdit(id){
+  openEditId=(openEditId===id?null:id);renderAdmEmpTable();
+  if(openEditId){const r=document.getElementById("edit-row-"+id);if(r)setTimeout(()=>r.scrollIntoView({behavior:"smooth",block:"nearest"}),50);}
+}
+async function saveEdit(id){
+  const e=S.employees.find(x=>x.id===id);
+  e.name=document.getElementById("ei-name-"+id).value.trim()||e.name;
+  e.branch=document.getElementById("ei-branch-"+id).value;
+  e.desig=document.getElementById("ei-desig-"+id).value;
+  e.plStart=document.getElementById("ei-plstart-"+id).value||null;
+  e.cf=parseFloat(document.getElementById("ei-cf-"+id).value)||0;
+  const newPass=document.getElementById("ei-pass-"+id).value.trim();
+  if(newPass){
+    if(!e.auth_uid){showAlert("Cannot change password: no auth account linked for this employee","e");return;}
+    try{
+      const{data:{session}}=await supabaseClient.auth.getSession();
+      const resp=await fetch(`${SUPABASE_URL}/functions/v1/reset-employee-password`,{
+        method:"POST",
+        headers:{"Content-Type":"application/json","Authorization":"Bearer "+session.access_token,"apikey":SUPABASE_ANON_KEY},
+        body:JSON.stringify({auth_uid:e.auth_uid,new_password:newPass})
+      });
+      const result=await resp.json();
+      if(!resp.ok)throw new Error(result.error||"Password update failed");
+    }catch(err){showAlert("Password update failed: "+err.message,"e");return;}
+  }
+  openEditId=null;scheduleSave();renderAdmEmpTable();showAlert("Employee updated","s");
+}
+async function addEmployee(){
+  const name=document.getElementById("ae-name").value.trim();
+  const employeeCode=document.getElementById("ae-code").value.trim().toUpperCase();
+  const branch=document.getElementById("ae-branch").value;
+  const desig=document.getElementById("ae-desig").value;
+  const pass=document.getElementById("ae-pass").value.trim();
+  const plM=document.getElementById("ae-plstart-m").value;
+  const plY=document.getElementById("ae-plstart-y").value;
+  const plStart=(plM&&plY)?`${plY}-${plM}`:null;
+  const cf=parseFloat(document.getElementById("ae-cf").value)||0;
+  if(!name||!employeeCode||!pass)return showAlert("Name, employee code and password are required","e");
+  if(S.employees.some(e=>e.employee_code===employeeCode))return showAlert("Employee code already exists","e");
+
+  showAlert("Creating employee…","s");
+
+  try {
+    const res = await supabaseClient.functions.invoke("create-employee",{
+      body: { employee_code: employeeCode, password: pass }
+    });
+    if(res.error){
+      const detail = res.data ? JSON.stringify(res.data) : res.error.message;
+      throw new Error(detail);
+    }
+    const auth_uid = res.data?.auth_uid;
+    if(!auth_uid) throw new Error("No auth_uid returned from server: " + JSON.stringify(res.data));
+
+    const authEmail=`${employeeCode.toLowerCase()}@hr.internal`;
+    const newEmp={name,branch,desig,pl_start:plStart,cf,employee_code:employeeCode,auth_email:authEmail,auth_uid,is_admin:false};
+    const {data:inserted, error:insertErr} = await supabaseClient.from("employees").insert(newEmp).select().single();
+    if(insertErr) throw new Error("DB insert failed: "+insertErr.message);
+
+    S.employees.push({...inserted, plStart: inserted.pl_start});
+    S.nextId = Math.max(...S.employees.map(e=>e.id||0)) + 1;
+    renderAdmEmpTable();
+    document.getElementById("ae-name").value="";document.getElementById("ae-code").value="";document.getElementById("ae-pass").value="Welcome123";document.getElementById("ae-cf").value="0";document.getElementById("ae-plstart-m").value="";document.getElementById("ae-plstart-y").value="";
+    showAlert(`${name} added and login created (${employeeCode})`,"s");
+  } catch(err){
+    console.error(err);
+    showAlert("Failed to create employee: "+err.message,"e");
+  }
+}
+function removeEmp(id){
+  if(!confirm("Remove this employee and all their leave records?"))return;
+  S.employees=S.employees.filter(e=>e.id!==id);
+  S.leaves=S.leaves.filter(l=>l.empId!==id);
+  scheduleSave();renderAdmEmpTable();showAlert("Employee removed","s");
+}
+
+function populateMlEmps(){
+  document.getElementById("ml-emp").innerHTML=S.employees.map(e=>`<option value="${e.id}">${e.name} — ${e.branch}</option>`).join("");
+}
+function populateAdmFilters(){
+  const af=document.getElementById("af-emp");
+  af.innerHTML=`<option value="">All employees</option>`+S.employees.map(e=>`<option value="${e.id}">${e.name}</option>`).join("");
+  const months=[...new Set(S.leaves.map(l=>l.month||monthOf(l.from)).filter(Boolean))].sort().reverse();
+  document.getElementById("af-mon").innerHTML=`<option value="">All months</option>`+months.map(m=>`<option value="${m}">${fmtM(m)}</option>`).join("");
+}
+function addLeave(){
+  const empId=parseInt(document.getElementById("ml-emp").value);
+  const status=document.getElementById("ml-status").value;
+  const from=document.getElementById("ml-from").value;
+  const to=document.getElementById("ml-to").value;
+  const isHalf=document.getElementById("ml-halfday").value==="half";
+  const month=document.getElementById("ml-month").value||monthOf(from||new Date().toISOString().split("T")[0]);
+  const note=document.getElementById("ml-note").value.trim();
+  if(!from||!to)return showAlert("Select from and to dates","e");
+  if(parseDate(from)>parseDate(to))return showAlert("From must be before to","e");
+  const days=isHalf?0.5:workDays(parseDate(from),parseDate(to));
+  if(days===0)return showAlert("No working days in range","e");
+
+  // If marking PL and employee doesn't have enough balance, split into PL + LOP
+  if(status==="Approved"){
+    const emp=S.employees.find(e=>e.id===empId);
+    if(emp){
+      const bal=balance(emp);
+      // Check if this is a PL-type entry (note or explicit — always true for "Approved" admin leave)
+      if(bal<days && bal>=0){
+        const plDays=bal;
+        const lopDays=days-bal;
+        if(plDays>0){
+          S.leaves.push({id:S.nextLeaveId++,empId,from,to,days:plDays,month,note:(note?note+" — ":"")+"PL portion",appliedOn:new Date().toISOString().split("T")[0],status:"Approved",source:"admin",halfDay:isHalf&&days===0.5});
+        }
+        S.leaves.push({id:S.nextLeaveId++,empId,from,to,days:lopDays,month,note:(note?note+" — ":"")+"LOP (insufficient PL balance)",appliedOn:new Date().toISOString().split("T")[0],status:"Approved",source:"admin",isLOP:true});
+        scheduleSave();populateAdmFilters();renderAdmLeaves();renderAdmMetrics();renderAdmPending();
+        document.getElementById("ml-from").value="";document.getElementById("ml-to").value="";document.getElementById("ml-note").value="";document.getElementById("ml-halfday").value="full";
+        showAlert(`PL insufficient — ${plDays>0?plDays+"d PL + ":""}${lopDays}d marked as LOP`,"s");
+        return;
+      }
+    }
+  }
+
+  S.leaves.push({id:S.nextLeaveId++,empId,from,to,days,month,note,appliedOn:new Date().toISOString().split("T")[0],status,source:"admin",halfDay:isHalf});
+  scheduleSave();populateAdmFilters();renderAdmLeaves();renderAdmMetrics();renderAdmPending();
+  document.getElementById("ml-from").value="";document.getElementById("ml-to").value="";document.getElementById("ml-note").value="";document.getElementById("ml-halfday").value="full";
+  showAlert("Leave entry added","s");
+}
+function updateLeave(id,status){
+  const l=S.leaves.find(x=>x.id===id);if(!l)return;
+  l.status=status;scheduleSave();
+  renderAdmPending();renderAdmMetrics();renderAdmEmpOv();
+  if(document.getElementById("at-leaves").style.display!=="none")renderAdmLeaves();
+  showAlert(`Leave ${status.toLowerCase()}`,"s");
+}
+function renderAdmLeaves(){
+  const empF=document.getElementById("af-emp")?.value||"";
+  const monF=document.getElementById("af-mon")?.value||"";
+  const srcF=document.getElementById("af-src")?.value||"";
+  const statF=document.getElementById("af-stat")?.value||"";
+  let leaves=S.leaves.filter(l=>{
+    if(empF&&l.empId!==parseInt(empF))return false;
+    if(monF&&(l.month||monthOf(l.from))!==monF)return false;
+    if(srcF&&l.source!==srcF)return false;
+    if(statF&&l.status!==statF)return false;
+    return true;
+  }).reverse();
+  document.getElementById("adm-leaves-tbl").innerHTML=leaves.length?leaves.map(l=>{
+    const emp=S.employees.find(e=>e.id===l.empId);
+    const cls=l.status==="Approved"?"bg-green":l.status==="Rejected"?"bg-red":"bg-amber";
+    const src=l.source==="admin"?`<span class="chip-admin">Admin</span>`:`<span class="chip-emp">Emp</span>`;
+    const acts=l.status==="Pending"?`<button class="btn btn-approve btn-sm" onclick="updateLeave(${l.id},'Approved')">✓</button> <button class="btn btn-danger btn-sm" onclick="updateLeave(${l.id},'Rejected')">✕</button>`:`<button class="btn btn-danger btn-sm" onclick="deleteLeave(${l.id})">Del</button>`;
+    return`<tr><td style="font-weight:500">${emp?emp.name.split(" ")[0]:"?"}</td><td><span class="badge bg-blue">${emp?emp.branch:""}</span></td><td>${fmtD(l.from)}</td><td>${fmtD(l.to)}</td><td>${l.days}</td><td style="font-size:12px">${fmtM(l.month||monthOf(l.from))}</td><td style="font-size:12px;color:var(--color-text-secondary)">${l.note||"—"}</td><td>${src}</td><td><span class="badge ${cls}">${l.status}</span></td><td>${acts}</td></tr>`;
+  }).join(""):`<tr><td colspan="10"><div class="empty-state"><p>No leave entries found</p></div></td></tr>`;
+}
+function deleteLeave(id){
+  if(!confirm("Delete this leave entry?"))return;
+  S.leaves=S.leaves.filter(l=>l.id!==id);
+  scheduleSave();renderAdmLeaves();renderAdmMetrics();showAlert("Leave deleted","s");
+}
+function renderSettingsTab(){
+  const sel=document.getElementById("adm-emp-pass-sel");
+  if(sel)sel.innerHTML=S.employees.map(e=>`<option value="${e.id}">${e.name} — ${e.branch}</option>`).join("");
+}
+function changeAdminPass(){
+  const np=document.getElementById("adm-newpass").value.trim(),cp=document.getElementById("adm-confpass").value.trim();
+  if(!np)return showAlert("Enter new password","e");if(np!==cp)return showAlert("Passwords don't match","e");
+  S.adminPass=np;scheduleSave();document.getElementById("adm-newpass").value="";document.getElementById("adm-confpass").value="";
+  showAlert("Admin password updated","s");
+}
+function resetEmpPass(){
+  const id=parseInt(document.getElementById("adm-emp-pass-sel").value);
+  const np=document.getElementById("adm-emp-newpass").value.trim();
+  const emp=S.employees.find(e=>e.id===id);
+  if(!np)return showAlert("Enter new password","e");
+  emp.pass=np;scheduleSave();document.getElementById("adm-emp-newpass").value="";
+  showAlert(`Password reset for ${emp.name}`,"s");
+}
+function exportData(){
+  const blob=new Blob([JSON.stringify(S,null,2)],{type:"application/json"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");a.href=url;a.download=`leave_data_${new Date().toISOString().split("T")[0]}.json`;a.click();
+  URL.revokeObjectURL(url);
+  showAlert("Data exported","s");
+}
+function exportToExcel(){
+  if(typeof XLSX==="undefined"){showAlert("Excel library not loaded yet, try again.","e");return;}
+  const wb=XLSX.utils.book_new();
+
+  // ── Sheet 1: Employees ──
+  const empRows=S.employees.map(e=>({
+    ID:e.id,
+    Name:e.name,
+    Branch:e.branch,
+    Designation:e.desig,
+    "PL Start":e.plStart||"",
+    "Carry Forward":e.cf,
+    "PL Balance":balance(e),
+    "PL Used":usedApproved(e.id),
+    "Pending Days":pendingDays(e.id),
+    Password:e.pass
+  }));
+  const ws1=XLSX.utils.json_to_sheet(empRows);
+  ws1['!cols']=[{wch:6},{wch:22},{wch:14},{wch:24},{wch:12},{wch:14},{wch:12},{wch:10},{wch:14},{wch:14}];
+  const hdrStyle={font:{bold:true},fill:{fgColor:{rgb:"534AB7"}},fontColor:{rgb:"FFFFFF"}};
+  XLSX.utils.book_append_sheet(wb,ws1,"Employees");
+
+  // ── Sheet 2: Leave Records ──
+  const leaveRows=S.leaves.map(l=>{
+    const emp=S.employees.find(e=>e.id===l.empId);
+    return{
+      "Leave ID":l.id,
+      "Emp ID":l.empId,
+      "Employee Name":emp?emp.name:"Unknown",
+      "Branch":emp?emp.branch:"",
+      "From":l.from,
+      "To":l.to,
+      "Days":l.days,
+      "Month":l.month||monthOf(l.from),
+      "Note":l.note||"",
+      "Applied On":l.appliedOn||"",
+      "Status":l.status,
+      "Source":l.source
+    };
+  });
+  const ws2=XLSX.utils.json_to_sheet(leaveRows.length?leaveRows:[{"Leave ID":"","Emp ID":"","Employee Name":"No records yet","Branch":"","From":"","To":"","Days":"","Month":"","Note":"","Applied On":"","Status":"","Source":""}]);
+  ws2['!cols']=[{wch:9},{wch:7},{wch:22},{wch:14},{wch:12},{wch:12},{wch:6},{wch:10},{wch:22},{wch:12},{wch:10},{wch:10}];
+  XLSX.utils.book_append_sheet(wb,ws2,"Leave Records");
+
+  // ── Sheet 3: Summary by Branch ──
+  const branches=["Kalyan","Dombivali","Ambernath"];
+  const summaryRows=branches.map(br=>{
+    const emps=S.employees.filter(e=>e.branch===br);
+    const totalBal=emps.reduce((s,e)=>s+balance(e),0);
+    const totalUsed=emps.reduce((s,e)=>s+usedApproved(e.id),0);
+    const pending=S.leaves.filter(l=>{const emp=S.employees.find(e=>e.id===l.empId);return emp&&emp.branch===br&&l.status==="Pending";}).length;
+    return{"Branch":br,"Total Employees":emps.length,"Total PL Balance":totalBal,"Total PL Used":totalUsed,"Pending Requests":pending};
+  });
+  const ws3=XLSX.utils.json_to_sheet(summaryRows);
+  ws3['!cols']=[{wch:14},{wch:18},{wch:18},{wch:14},{wch:18}];
+  XLSX.utils.book_append_sheet(wb,ws3,"Branch Summary");
+
+  const fname=`Sushobhit_LeaveDB_${new Date().toISOString().split("T")[0]}.xlsx`;
+  XLSX.writeFile(wb,fname);
+  showAlert(`Excel exported: ${fname}`,"s");
+}
+
+function importFromExcel(input){
+  const file=input.files[0];if(!file)return;
+  const msg=document.getElementById("xl-import-msg");
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      const wb=XLSX.read(e.target.result,{type:"array"});
+      const ws=wb.Sheets["Employees"];
+      if(!ws){msg.style.display="block";msg.style.background="#FCEBEB";msg.style.color="#791F1F";msg.textContent="❌ No 'Employees' sheet found. Please import a file exported from this system.";return;}
+      const empData=XLSX.utils.sheet_to_json(ws);
+      if(!empData.length){msg.style.display="block";msg.style.background="#FAEEDA";msg.style.color="#633806";msg.textContent="⚠ Employees sheet is empty.";return;}
+
+      // Validate required columns
+      const req=["ID","Name","Branch","Designation"];
+      const cols=Object.keys(empData[0]);
+      const missing=req.filter(r=>!cols.includes(r));
+      if(missing.length){msg.style.display="block";msg.style.background="#FCEBEB";msg.style.color="#791F1F";msg.textContent=`❌ Missing columns: ${missing.join(", ")}`;return;}
+
+      if(!confirm(`Import ${empData.length} employees from Excel? This will REPLACE all current employee data (leave records kept).`))return;
+
+      const newEmps=empData.map(r=>({
+        id:Number(r["ID"]),
+        name:String(r["Name"]||"").trim(),
+        branch:String(r["Branch"]||"").trim(),
+        desig:String(r["Designation"]||"").trim(),
+        plStart:r["PL Start"]?String(r["PL Start"]).trim():null,
+        cf:parseFloat(r["Carry Forward"])||0,
+        pass:String(r["Password"]||"").trim()||"pass123"
+      })).filter(e=>e.name);
+
+      const maxId=Math.max(0,...newEmps.map(e=>e.id));
+      S.employees=newEmps;
+      S.nextId=maxId+1;
+      // Remove orphan leaves
+      const empIds=new Set(newEmps.map(e=>e.id));
+      S.leaves=S.leaves.filter(l=>empIds.has(l.empId));
+      scheduleSave();
+      msg.style.display="block";msg.style.background="#EAF3DE";msg.style.color="#27500A";
+      msg.textContent=`✓ Imported ${newEmps.length} employees successfully.`;
+      showAlert(`${newEmps.length} employees imported from Excel`,"s");
+    }catch(err){
+      msg.style.display="block";msg.style.background="#FCEBEB";msg.style.color="#791F1F";
+      msg.textContent=`❌ Error reading file: ${err.message}`;
+    }
+    input.value="";
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function resetToDefaults(){
+  S=JSON.parse(JSON.stringify(DEFAULT_DATA));
+  scheduleSave();showAlert("Reset to default data","s");
+}
+
+// ── Regularization admin functions ──────────────────────────────────────────
+
+function renderRegRequests(){
+  if(!S.regularizations) S.regularizations=[];
+  // Populate employee filter
+  const empSel = document.getElementById("reg-filter-emp");
+  if(empSel){
+    const cur = empSel.value;
+    empSel.innerHTML = '<option value="">All employees</option>' +
+      S.employees.map(e=>`<option value="${e.id}">${e.name}</option>`).join("");
+    if(cur) empSel.value=cur;
+  }
+
+  // Populate month filter with current month as default
+  const monSel = document.getElementById("reg-filter-month");
+  if(monSel){
+    const curMon = monSel.value;
+    const allMonths = [...new Set(S.regularizations.map(r=>r.date?r.date.slice(0,7):"").filter(Boolean))].sort().reverse();
+    const currentMonthStr = `${CY}-${String(CM+1).padStart(2,"0")}`;
+    // Add current month if not present
+    if(!allMonths.includes(currentMonthStr)) allMonths.unshift(currentMonthStr);
+    monSel.innerHTML = '<option value="">All months</option>' +
+      allMonths.map(m=>{const[y,mo]=m.split("-");return`<option value="${m}">${MN[parseInt(mo)-1]} ${y}</option>`;}).join("");
+    // Default to current month if no selection yet
+    if(!curMon) monSel.value = currentMonthStr;
+    else monSel.value = curMon;
+  }
+
+  const fEmp    = document.getElementById("reg-filter-emp")?.value||"";
+  const fMonth  = document.getElementById("reg-filter-month")?.value||"";
+  const fStatus = document.getElementById("reg-filter-status")?.value||"";
+
+  let regs = [...S.regularizations].reverse();
+  if(fEmp)    regs = regs.filter(r=>String(r.empId)===fEmp);
+  if(fMonth)  regs = regs.filter(r=>r.date&&r.date.startsWith(fMonth));
+  if(fStatus) regs = regs.filter(r=>r.status===fStatus);
+
+  const statusCls = s => s==="Approved"?"bg-green":s==="Rejected"?"bg-red":"bg-amber";
+
+  const tbody = document.getElementById("reg-requests-tbody");
+  if(!tbody) return;
+  tbody.innerHTML = regs.map(r=>{
+    const emp = S.employees.find(e=>e.id===r.empId);
+    const empName = emp?emp.name:"—";
+    const actions = r.status==="Pending"
+      ? `<div style="display:flex;flex-direction:column;gap:3px">
+           <button class="btn btn-accent" style="padding:3px 10px;font-size:11px;width:100%" onclick="approveReg(${r.id})">✓ Approve</button>
+           <button class="btn" style="padding:3px 10px;font-size:11px;width:100%;color:#B83333;border-color:#E9B0B0" onclick="rejectReg(${r.id})">✕ Reject</button>
+         </div>`
+      : `<span style="font-size:11px;color:var(--text2)">${r.decidedOn||""}</span>`;
+    return `<tr>
+      <td style="font-size:12px;font-weight:500">${empName}</td>
+      <td style="font-size:12px">${r.date}</td>
+      <td style="font-size:12px">${r.shift||"—"}</td>
+      <td style="font-size:12px;color:var(--text2)">${r.wasIn||"—"}</td>
+      <td style="font-size:12px;color:var(--text2)">${r.wasOut||"—"}</td>
+      <td style="font-size:12px;color:var(--green);font-weight:500">${r.newIn||"—"}</td>
+      <td style="font-size:12px;color:var(--green);font-weight:500">${r.newOut||"—"}</td>
+      <td style="font-size:12px;color:var(--text2);max-width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${r.reason||""}">${r.reason||"—"}</td>
+      <td><span class="badge ${statusCls(r.status)}" style="font-size:11px">${r.status}</span></td>
+      <td style="min-width:80px">${actions}</td>
+    </tr>`;
+  }).join("") || `<tr><td colspan="10"><div class="empty-state"><p>No regularization requests</p></div></td></tr>`;
+
+  updateRegBadge();
+}
+
+function renderOvRegRequests(){
+  if(!S.regularizations) S.regularizations=[];
+
+  // Populate employee filter
+  const empSel = document.getElementById("ov-reg-filter-emp");
+  if(empSel){
+    const cur = empSel.value;
+    empSel.innerHTML = '<option value="">All employees</option>' +
+      S.employees.map(e=>`<option value="${e.id}">${e.name}</option>`).join("");
+    if(cur) empSel.value = cur;
+  }
+
+  const fEmp    = document.getElementById("ov-reg-filter-emp")?.value||"";
+  const fStatus = document.getElementById("ov-reg-filter-status")?.value;  // default "Pending"
+
+  let regs = [...S.regularizations].reverse();
+  if(fEmp)    regs = regs.filter(r=>String(r.empId)===fEmp);
+  if(fStatus) regs = regs.filter(r=>r.status===fStatus);
+
+  // Pending chip count (always based on total pending, ignoring emp filter)
+  const pendingCount = S.regularizations.filter(r=>r.status==="Pending").length;
+  const chip = document.getElementById("ov-reg-pending-chip");
+  if(chip){ chip.textContent = pendingCount+" pending"; chip.style.display = pendingCount?"":"none"; }
+
+  const statusCls = s => s==="Approved"?"bg-green":s==="Rejected"?"bg-red":"bg-amber";
+
+  const tbody = document.getElementById("ov-reg-tbody");
+  if(!tbody) return;
+  tbody.innerHTML = regs.map(r=>{
+    const emp = S.employees.find(e=>e.id===r.empId);
+    const empName = emp ? emp.name : "—";
+    const actions = r.status==="Pending"
+      ? `<div style="display:flex;flex-direction:column;gap:3px">
+           <button class="btn btn-approve btn-sm" style="width:100%;padding:3px 8px;font-size:11px" onclick="approveReg(${r.id})">✓</button>
+           <button class="btn btn-danger btn-sm" style="width:100%;padding:3px 8px;font-size:11px" onclick="rejectReg(${r.id})">✕</button>
+         </div>`
+      : `<span style="font-size:11px;color:var(--text2)">${r.decidedOn||"—"}</span>`;
+    return `<tr>
+      <td style="font-size:12px;font-weight:500">${empName}</td>
+      <td style="font-size:12px">${r.date}</td>
+      <td style="font-size:12px">${r.shift||"—"}</td>
+      <td style="font-size:12px;color:var(--text2)">${r.wasIn||"—"}</td>
+      <td style="font-size:12px;color:var(--text2)">${r.wasOut||"—"}</td>
+      <td style="font-size:12px;color:var(--green);font-weight:500">${r.newIn||"—"}</td>
+      <td style="font-size:12px;color:var(--green);font-weight:500">${r.newOut||"—"}</td>
+      <td style="font-size:12px;color:var(--text2);max-width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${r.reason||""}">${r.reason||"—"}</td>
+      <td><span class="badge ${statusCls(r.status)}" style="font-size:11px">${r.status}</span></td>
+      <td style="min-width:60px">${actions}</td>
+    </tr>`;
+  }).join("") || `<tr><td colspan="10"><div class="empty-state" style="padding:1.5rem"><p>No regularization requests</p></div></td></tr>`;
+}
+
+function approveReg(id){
+  const reg = S.regularizations.find(r=>r.id===id);
+  if(!reg||reg.status!=="Pending") return;
+  reg.status    = "Approved";
+  reg.decidedOn = now.toISOString().split("T")[0];
+
+  const emp = S.employees.find(e=>e.id===reg.empId);
+  if(emp) _applyRegPatch(id, emp, reg.date);
+
+  scheduleSave();
+  renderRegRequests();
+  renderOvRegRequests();
+  renderAdmAttMetrics();
+  const attResults = document.getElementById("att-results");
+  if(attResults && attResults.style.display!=="none") renderAttTable();
+  showAlert(`Regularization approved for ${reg.empName} on ${reg.date}`,"s");
+}
+
+function rejectReg(id){
+  const reg = S.regularizations.find(r=>r.id===id);
+  if(!reg||reg.status!=="Pending") return;
+  reg.status   = "Rejected";
+  reg.decidedOn= now.toISOString().split("T")[0];
+  scheduleSave();
+  renderRegRequests();
+  renderOvRegRequests();
+  showAlert(`Regularization rejected for ${reg.empName} on ${reg.date}`,"e");
+}
+
+// ── Employee regularization modal ────────────────────────────────────────────
+
+let regModalRow = null;            // the attData row currently being regularized
+let regModalEmpId = null;          // null = employee self, number = admin regularizing for empId
+let regModalAdminDirect = false;   // true = admin direct (auto-approve)
+let regModalExistingRegId = null;  // id of an existing approved reg being corrected (re-regularize)
+
+function openRegModal(dateStr){
+  // Employee self-regularization
+  const emp = S.employees.find(e=>e.id===session.empId);
+  if(!emp) return;
+  const empFirstName = emp.name.trim().split(" ")[0].toLowerCase();
+  const empFullName  = emp.name.trim().toLowerCase();
+  const row = attData.find(r=>{
+    const n=(r.name||"").trim().toLowerCase();
+    return r.date===dateStr && (n===empFullName||n===empFirstName||empFullName.includes(n)||n.includes(empFirstName));
+  });
+  if(!row){ showAlert("Row not found","e"); return; }
+
+  // Validate month restriction: only current and previous month allowed
+  const rowMonth = dateStr.slice(0,7);
+  const curMonthStr2  = `${CY}-${String(CM+1).padStart(2,"0")}`;
+  const prevDate2     = new Date(CY, CM-1, 1);
+  const prevMonthStr2 = `${prevDate2.getFullYear()}-${String(prevDate2.getMonth()+1).padStart(2,"0")}`;
+  if(rowMonth !== curMonthStr2 && rowMonth !== prevMonthStr2){
+    showAlert("Regularization is only allowed for the current and previous month","e");
+    return;
+  }
+
+  if(!S.regularizations) S.regularizations=[];
+  const existing = S.regularizations.find(r=>r.empId===emp.id&&r.date===dateStr&&r.status==="Pending");
+  if(existing){ showAlert("A pending regularization request already exists for this date","e"); return; }
+
+  regModalEmpId = emp.id;
+  regModalAdminDirect = false;
+  regModalExistingRegId = null;
+  _populateRegModal(row, emp);
+}
+
+function openAdminRegModal(dateStr, empId){
+  // Admin directly regularizes — auto-approve on submit
+  const emp = S.employees.find(e=>e.id===empId);
+  if(!emp) return;
+  const empFirstName = emp.name.trim().split(" ")[0].toLowerCase();
+  const empFullName  = emp.name.trim().toLowerCase();
+  let row = attData.find(r=>{
+    const n=(r.name||"").trim().toLowerCase();
+    return r.date===dateStr && (n===empFullName||n===empFirstName||empFullName.includes(n)||n.includes(empFirstName));
+  });
+  // If no attData row exists, create a synthetic placeholder
+  if(!row){
+    row = { name: emp.name, date: dateStr, day:"", shift:"", inTime:"", outTime:"", nonWork:false };
+    attData.push(row);
+  }
+  regModalEmpId = empId;
+  regModalAdminDirect = true;
+  // Check if there's an existing approved regularization to pre-populate
+  if(!S.regularizations) S.regularizations=[];
+  regModalExistingRegId = null;
+  const existingApproved = S.regularizations.find(rq=>rq.empId===empId&&rq.date===dateStr&&rq.status==="Approved");
+  if(existingApproved) regModalExistingRegId = existingApproved.id;
+  _populateRegModal(row, emp, existingApproved);
+}
+
+function _populateRegModal(row, emp, existingReg){
+  regModalRow = row;
+  const titleEl = document.getElementById("reg-modal-title-extra");
+  if(titleEl) titleEl.textContent = regModalAdminDirect ? ` — ${emp.name}` : "";
+  const reasonLabel = document.getElementById("reg-modal-reason-label");
+  if(reasonLabel) reasonLabel.textContent = regModalAdminDirect ? "Admin note (optional)" : "Reason *";
+  const submitBtn = document.getElementById("reg-modal-submit-btn");
+  if(submitBtn) submitBtn.textContent = regModalAdminDirect
+    ? (existingReg ? "Update & Re-approve" : "Apply & Approve")
+    : "Submit Request";
+
+  // Show "correcting prior regularization" notice if re-regularizing
+  let reRegNotice = document.getElementById("reg-modal-rereg-notice");
+  if(!reRegNotice){
+    // Create the notice element once (injected into modal body above the fields)
+    reRegNotice = document.createElement("div");
+    reRegNotice.id = "reg-modal-rereg-notice";
+    reRegNotice.style.cssText = "background:var(--amber-soft);color:#A06600;border:1px solid #E8C97A;border-radius:8px;padding:8px 12px;font-size:12px;font-weight:500;margin-bottom:12px;display:none";
+    reRegNotice.textContent = "⚠ Correcting a previous regularization — previous values will be replaced.";
+    const modalBody = document.querySelector(".modal-body .form-field:first-of-type");
+    const modalBodyEl = document.querySelector(".modal-body > div:last-of-type");
+    if(modalBodyEl) modalBodyEl.parentNode.insertBefore(reRegNotice, modalBodyEl);
+  }
+  reRegNotice.style.display = existingReg ? "" : "none";
+
+  // Show current classified status
+  const cl = classifyRow(row);
+  const curStatusEl = document.getElementById("reg-modal-cur-status");
+  if(curStatusEl) curStatusEl.textContent = cl.status + (cl.halfPL ? " (½PL)" : "");
+
+  document.getElementById("reg-modal-date").textContent  = row.date;
+  document.getElementById("reg-modal-shift").textContent = row.shift||"—";
+  document.getElementById("reg-modal-in").textContent    = row.inTime||"Not recorded";
+  document.getElementById("reg-modal-out").textContent   = row.outTime||"Not recorded";
+
+  // Pre-fill with existing approved regularization values if re-regularizing
+  document.getElementById("reg-modal-new-in").value  = existingReg ? (existingReg.newIn||"")  : (row.inTime||"");
+  document.getElementById("reg-modal-new-out").value = existingReg ? (existingReg.newOut||"") : (row.outTime||"");
+  document.getElementById("reg-modal-reason").value  = existingReg ? (existingReg.reason||"") : "";
+
+  // Admin gets the "Mark as" dropdown; employees do not
+  const statusRow = document.getElementById("reg-modal-status-row");
+  if(statusRow) statusRow.style.display = regModalAdminDirect ? "" : "none";
+  const newStatusSel = document.getElementById("reg-modal-new-status");
+  if(newStatusSel){
+    // Pre-select existing status if re-regularizing
+    newStatusSel.value = existingReg ? (existingReg.newStatus||"") : "";
+  }
+  // Always show punch-time section initially
+  const timesSection = document.getElementById("reg-modal-times-section");
+  if(timesSection) timesSection.style.display = "";
+
+  document.getElementById("reg-modal").style.display = "flex";
+}
+
+// Called when admin changes the "Mark as" dropdown
+function onRegModalStatusChange(){
+  const val = document.getElementById("reg-modal-new-status").value;
+  const timesSection = document.getElementById("reg-modal-times-section");
+  // Hide punch times when a definitive status is chosen that doesn't need them
+  const punchless = ["PL (Paid Leave)","LOP (Loss of Pay)","Week Off"];
+  if(timesSection) timesSection.style.display = punchless.includes(val) ? "none" : "";
+}
+
+function closeRegModal(){
+  document.getElementById("reg-modal").style.display="none";
+  regModalRow=null;
+  regModalExistingRegId=null;
+}
+
+function submitRegularization(){
+  const emp = S.employees.find(e=>e.id===regModalEmpId);
+  if(!emp||!regModalRow) return;
+
+  const newStatusRaw = regModalAdminDirect
+    ? (document.getElementById("reg-modal-new-status")?.value||"")
+    : "";
+  const newIn    = document.getElementById("reg-modal-new-in").value.trim();
+  const newOut   = document.getElementById("reg-modal-new-out").value.trim();
+  const reason   = document.getElementById("reg-modal-reason").value.trim();
+
+  // Validation
+  if(!regModalAdminDirect && !reason) return showAlert("Please provide a reason","e");
+  // For employees: must provide at least one time
+  if(!regModalAdminDirect && !newIn && !newOut)
+    return showAlert("Please enter at least one corrected time","e");
+  // For admin without a status override: must provide at least one time
+  if(regModalAdminDirect && !newStatusRaw && !newIn && !newOut)
+    return showAlert("Please select a status to mark OR enter corrected punch times","e");
+
+  if(!S.regularizations) S.regularizations=[];
+  if(!S.nextRegId) S.nextRegId=1;
+
+  const today    = now.toISOString().split("T")[0];
+  const regStatus = regModalAdminDirect ? "Approved" : "Pending";
+
+  // Map chosen display status → shift value used in attData
+  const statusToShift = {
+    "Present"           : regModalRow.shift || "1st",
+    "Half Day"          : "Half",
+    "MRM"               : "MRM",
+    "PL (Paid Leave)"   : "PL",
+    "LOP (Loss of Pay)" : "LOP",
+    "Week Off"          : "WeekOff",
+  };
+  const newShift = newStatusRaw ? statusToShift[newStatusRaw] || regModalRow.shift : null;
+
+  // If re-regularizing an existing approved record, update it in place instead of pushing a new one
+  if(regModalAdminDirect && regModalExistingRegId !== null){
+    const existIdx = S.regularizations.findIndex(r=>r.id===regModalExistingRegId);
+    if(existIdx > -1){
+      const old = S.regularizations[existIdx];
+      // Reset attData to original values so the patch is re-applied cleanly
+      const emp2 = S.employees.find(e=>e.id===regModalEmpId);
+      if(emp2){
+        const empFN = emp2.name.trim().split(" ")[0].toLowerCase();
+        const empFL = emp2.name.trim().toLowerCase();
+        const rowIdx2 = attData.findIndex(r2=>{
+          const n=(r2.name||"").trim().toLowerCase();
+          return r2.date===old.date&&(n===empFL||n===empFN||empFL.includes(n)||n.includes(empFN));
+        });
+        if(rowIdx2>-1){
+          // Restore original punch times
+          attData[rowIdx2].inTime  = old.wasIn  || attData[rowIdx2].inTime;
+          attData[rowIdx2].outTime = old.wasOut || attData[rowIdx2].outTime;
+          if(old.newShift) attData[rowIdx2].shift = regModalRow.shift || attData[rowIdx2].shift;
+          attData[rowIdx2]._regularized = false;
+          attData[rowIdx2]._regReason   = null;
+        }
+      }
+      // Remove leave records created by the old regularization
+      S.leaves = S.leaves.filter(l=>!(l.source==="regularization"&&l.regId===old.id));
+      // Update the record in-place
+      S.regularizations[existIdx] = {
+        ...old,
+        newIn     : newIn,
+        newOut    : newOut,
+        newStatus : newStatusRaw || null,
+        newShift  : newShift,
+        reason    : reason || "Admin direct update",
+        appliedOn : today,
+        decidedOn : today,
+      };
+      // Re-apply the updated patch
+      _applyRegPatch(old.id, emp, regModalRow.date);
+      scheduleSave();
+      closeRegModal();
+      showAlert(`Regularization updated for ${emp.name} on ${regModalRow.date}`,"s");
+      renderAttTable();
+      renderAdmAttMetrics();
+      renderRegRequests();
+      return;
+    }
+  }
+
+  const regId    = S.nextRegId++;
+
+  S.regularizations.push({
+    id        : regId,
+    empId     : emp.id,
+    empName   : emp.name,
+    date      : regModalRow.date,
+    shift     : regModalRow.shift||"",
+    wasIn     : regModalRow.inTime||"",
+    wasOut    : regModalRow.outTime||"",
+    newIn     : newIn,
+    newOut    : newOut,
+    newStatus : newStatusRaw || null,
+    newShift  : newShift,
+    reason    : reason || "Admin direct update",
+    appliedOn : today,
+    status    : regStatus,
+    decidedOn : regModalAdminDirect ? today : null,
+  });
+
+  // If admin direct → immediately patch attData
+  if(regModalAdminDirect){
+    _applyRegPatch(regId, emp, regModalRow.date);
+  }
+
+  scheduleSave();
+  closeRegModal();
+
+  if(regModalAdminDirect){
+    showAlert(`Attendance regularized for ${emp.name} on ${regModalRow.date}`,"s");
+    renderAttTable();
+    renderAdmAttMetrics();
+    renderRegRequests();
+  } else {
+    showAlert("Regularization request submitted — pending admin approval","s");
+    renderMyAttTable();
+  }
+}
+
+// Shared helper: apply an approved regularization to attData + create PL/LOP leave records
+function _applyRegPatch(regId, emp, dateStr){
+  const reg = S.regularizations.find(r=>r.id===regId);
+  if(!reg) return;
+
+  const empFirstName = emp.name.trim().split(" ")[0].toLowerCase();
+  const empFullName  = emp.name.trim().toLowerCase();
+  const rowIdx = attData.findIndex(r=>{
+    const n=(r.name||"").trim().toLowerCase();
+    return r.date===dateStr && (n===empFullName||n===empFirstName||empFullName.includes(n)||n.includes(empFirstName));
+  });
+
+  if(rowIdx > -1){
+    if(reg.newIn)  attData[rowIdx].inTime  = reg.newIn;
+    if(reg.newOut) attData[rowIdx].outTime = reg.newOut;
+    if(reg.newShift){
+      attData[rowIdx].shift   = reg.newShift;
+      attData[rowIdx].nonWork = ["PL","LOP","WeekOff"].includes(reg.newShift);
+    }
+    attData[rowIdx]._regularized = true;
+    attData[rowIdx]._regReason   = reg.reason;
+  }
+
+  const today = now.toISOString().split("T")[0];
+  const month = dateStr.slice(0,7);
+  const newSt = reg.newStatus;
+
+  // ── Reverse any prior auto-deducted PL for this employee+date ──────────────
+  // Sources that auto-create PL records: attendance upload (halfPL), prior regularization.
+  // When the admin regularizes to a status that is NOT "Half Day" or "PL (Paid Leave)",
+  // those deductions are no longer valid and must be removed so PL is restored.
+  const autoSources = ["attendance","attendance-half","regularization"];
+  const priorPLLeaves = S.leaves.filter(l =>
+    l.empId === emp.id &&
+    l.from  === dateStr &&
+    autoSources.includes(l.source) &&
+    !l.isLOP   // only remove PL portion, not LOP records (LOP has no PL impact)
+  );
+
+  // Determine what the row was classified as BEFORE this patch (original halfPL flag)
+  // We reverse PL if the old auto-deductions exist AND the new status is not PL/HalfDay
+  const newStatusNeedsPL = newSt === "Half Day" || newSt === "PL (Paid Leave)";
+
+  if(priorPLLeaves.length > 0){
+    if(!newStatusNeedsPL){
+      // Remove old PL deductions — PL is fully restored
+      const priorIds = new Set(priorPLLeaves.map(l=>l.id));
+      S.leaves = S.leaves.filter(l => !priorIds.has(l.id));
+      // Also remove any LOP records created alongside those PL records (same regId or same date/source)
+      S.leaves = S.leaves.filter(l => {
+        if(l.empId !== emp.id || l.from !== dateStr) return true;
+        if(!autoSources.includes(l.source)) return true;
+        // Remove LOP that was paired with the now-reversed PL
+        if(l.isLOP && (priorPLLeaves.some(p => p.source === l.source && (!p.regId || p.regId === l.regId)))) return false;
+        return true;
+      });
+    }
+    // If newStatusNeedsPL — we'll create fresh records below, but first remove old ones to avoid duplicates
+    else {
+      const priorIds = new Set(priorPLLeaves.map(l=>l.id));
+      S.leaves = S.leaves.filter(l => !priorIds.has(l.id));
+      // Remove paired LOP too
+      S.leaves = S.leaves.filter(l => {
+        if(l.empId !== emp.id || l.from !== dateStr) return true;
+        if(!autoSources.includes(l.source)) return true;
+        if(l.isLOP && priorPLLeaves.some(p => p.source === l.source && (!p.regId || p.regId === l.regId))) return false;
+        return true;
+      });
+    }
+  }
+
+  // ── Check if a leave record for this reg already exists (idempotency guard) ─
+  const regLeaveExists = S.leaves.some(l=>l.source==="regularization"&&l.regId===regId);
+  if(regLeaveExists) return;
+
+  // ── Create new leave records if the new status requires PL deduction ────────
+  if(newSt === "Half Day"){
+    const days = 0.5;
+    const bal  = balance(emp);
+    if(bal >= days){
+      S.leaves.push({id:S.nextLeaveId++,empId:emp.id,from:dateStr,to:dateStr,days,month,note:"Half day via regularization",appliedOn:today,status:"Approved",source:"regularization",regId,halfDay:true});
+    } else if(bal > 0){
+      S.leaves.push({id:S.nextLeaveId++,empId:emp.id,from:dateStr,to:dateStr,days:bal,month,note:"Half day via regularization (PL portion)",appliedOn:today,status:"Approved",source:"regularization",regId,halfDay:true});
+      S.leaves.push({id:S.nextLeaveId++,empId:emp.id,from:dateStr,to:dateStr,days:days-bal,month,note:"LOP — insufficient PL for half day",appliedOn:today,status:"Approved",source:"regularization",regId,isLOP:true});
+    } else {
+      S.leaves.push({id:S.nextLeaveId++,empId:emp.id,from:dateStr,to:dateStr,days,month,note:"LOP — no PL balance (half day regularization)",appliedOn:today,status:"Approved",source:"regularization",regId,isLOP:true});
+    }
+  } else if(newSt === "PL (Paid Leave)"){
+    const days = 1;
+    const bal  = balance(emp);
+    if(bal >= days){
+      S.leaves.push({id:S.nextLeaveId++,empId:emp.id,from:dateStr,to:dateStr,days,month,note:"Full PL via regularization",appliedOn:today,status:"Approved",source:"regularization",regId});
+    } else if(bal > 0){
+      S.leaves.push({id:S.nextLeaveId++,empId:emp.id,from:dateStr,to:dateStr,days:bal,month,note:"PL via regularization (partial)",appliedOn:today,status:"Approved",source:"regularization",regId});
+      S.leaves.push({id:S.nextLeaveId++,empId:emp.id,from:dateStr,to:dateStr,days:days-bal,month,note:"LOP — insufficient PL balance",appliedOn:today,status:"Approved",source:"regularization",regId,isLOP:true});
+    } else {
+      S.leaves.push({id:S.nextLeaveId++,empId:emp.id,from:dateStr,to:dateStr,days,month,note:"LOP — no PL balance (marked PL via regularization)",appliedOn:today,status:"Approved",source:"regularization",regId,isLOP:true});
+    }
+  }
+  // For Present, MRM, LOP (manual), Week Off — no PL record needed.
+  // LOP (Loss of Pay) as a status override does NOT affect PL balance — it's a pay deduction, not a leave.
+}
+
+function eTab(t){
+  ["dashboard","apply","myatt","mypass"].forEach(tab=>{
+    document.getElementById("et-"+tab).style.display=tab===t?"":"none";
+    const n=document.getElementById("enav-"+tab);if(n)n.className="nav-item"+(tab===t?" active":"");
+  });
+  if(t==="myatt") renderMyAtt();
+}
+
+// Shared helper: given a set of classified rows and an empId,
+// returns {halfPLDays, halfLOPDays} accumulated from S.leaves for all Half Day rows.
+function calcHalfDayLeaves(classifiedRows, empId){
+  const autoSrc = new Set(["attendance","attendance-half","regularization"]);
+  let halfPLDays=0, halfLOPDays=0;
+  if(!empId) return {halfPLDays, halfLOPDays};
+  classifiedRows.filter(r=>r.status==="Half Day").forEach(r=>{
+    const leavesForDate = S.leaves.filter(l=>
+      l.empId===empId && l.from===r.date && autoSrc.has(l.source)
+    );
+    halfPLDays  += leavesForDate.filter(l=>!l.isLOP).reduce((s,l)=>s+l.days,0);
+    halfLOPDays += leavesForDate.filter(l=> l.isLOP).reduce((s,l)=>s+l.days,0);
+  });
+  return {halfPLDays, halfLOPDays};
+}
+
+function renderMyAtt(){
+  const emp = S.employees.find(e=>e.id===session.empId);
+  if(!emp) return;
+
+  // Match by first name (case-insensitive) since attData stores the name from Excel
+  const empFirstName = emp.name.trim().split(" ")[0].toLowerCase();
+  const empFullName  = emp.name.trim().toLowerCase();
+
+  const myRows = attData.filter(r=>{
+    const n = (r.name||"").trim().toLowerCase();
+    return n === empFullName || n === empFirstName || empFullName.includes(n) || n.includes(empFirstName);
+  });
+
+  const noData = document.getElementById("myatt-no-data");
+  const content = document.getElementById("myatt-content");
+
+  if(!myRows.length){
+    noData.style.display=""; content.style.display="none";
+    document.getElementById("myatt-sub").textContent="No records found — ask admin to upload your attendance Excel";
+    return;
+  }
+  noData.style.display="none"; content.style.display="";
+
+  // Populate month filter
+  const months = [...new Set(myRows.map(r=>r.date?r.date.slice(0,7):""))].filter(Boolean).sort();
+  const mSel = document.getElementById("myatt-filter-month");
+  const prevMonth = mSel.value;
+  mSel.innerHTML = '<option value="">All months</option>' +
+    months.map(m=>{const[y,mo]=m.split("-");return`<option value="${m}">${MN[parseInt(mo)-1]} ${y}</option>`;}).join("");
+  if(prevMonth && months.includes(prevMonth)) mSel.value = prevMonth;
+
+  // Classify all rows
+  const classified = myRows.map(r=>({ ...r, ...classifyRow(r) }));
+
+  // Summary chips
+  const present    = classified.filter(r=>r.status==="Present").length;
+  const absent     = classified.filter(r=>r.status==="Absent").length;
+  const weekOff    = classified.filter(r=>r.status==="Week Off").length;
+  const onLeave    = classified.filter(r=>r.status==="On Leave").length;
+  const plCount    = classified.filter(r=>r.status==="PL (Paid Leave)").length;
+  const lopCount   = classified.filter(r=>r.status==="LOP (Loss of Pay)").length;
+  const halfDay    = classified.filter(r=>r.status==="Half Day").length;
+  const lateIn     = classified.filter(r=>r.flags&&r.flags.includes("Late In")).length;
+  const earlyOut   = classified.filter(r=>r.flags&&r.flags.includes("Early Out")).length;
+  const missingOut = classified.filter(r=>r.flags&&r.flags.includes("Missing Out")).length;
+  const {halfPLDays, halfLOPDays} = calcHalfDayLeaves(classified, session.empId);
+  const fmtD2 = v => v===0?'0':(v%1===0?String(v):v.toFixed(1));
+
+  const chip=(bg,col,icon,label,val)=>
+    `<div style="display:flex;align-items:center;gap:6px;background:${bg};color:${col};padding:6px 12px;border-radius:99px;font-size:12px;font-weight:600">${icon} ${label} <strong>${val}</strong></div>`;
+
+  document.getElementById("myatt-summary").innerHTML =
+    chip("var(--green-soft)","#2D7A52","✅","Present",present) +
+    chip("#FEF0FF","#7A2D9A","🌙","Week Off",weekOff) +
+    chip("var(--blue-soft)","#2065A8","🏖","On Leave",onLeave) +
+    ((plCount||halfPLDays>0)  ? chip("var(--green-soft)","#0E6E56","📋","PL",fmtD2(plCount+halfPLDays)+" d"):"") +
+    ((lopCount||halfLOPDays>0)? chip("var(--red-soft)","#8B2500","💸","LOP",fmtD2(lopCount+halfLOPDays)+" d"):"") +
+    (halfDay  ? chip("var(--purple-soft)","var(--purple)","🌗","Half Day",halfDay):"") +
+    (lateIn   ? chip("var(--amber-soft)","#A06600","⏰","Late In",lateIn):"") +
+    (earlyOut ? chip("#FEF6FF","#7A2D9A","🚪","Early Out",earlyOut):"") +
+    (missingOut? chip("var(--blue-soft)","#2065A8","❓","Missing Out",missingOut):"");
+
+  document.getElementById("myatt-sub").textContent =
+    `${myRows.length} day(s) on record · ${months.length} month(s)`;
+
+  renderMyAttTable();
+}
+
+function renderMyAttTable(){
+  const emp = S.employees.find(e=>e.id===session.empId);
+  if(!emp) return;
+  const empFirstName = emp.name.trim().split(" ")[0].toLowerCase();
+  const empFullName  = emp.name.trim().toLowerCase();
+
+  const filterMonth  = document.getElementById("myatt-filter-month")?.value||"";
+  const filterStatus = document.getElementById("myatt-filter-status")?.value||"";
+
+  let rows = attData.filter(r=>{
+    const n=(r.name||"").trim().toLowerCase();
+    return n===empFullName||n===empFirstName||empFullName.includes(n)||n.includes(empFirstName);
+  });
+
+  if(filterMonth)  rows = rows.filter(r=>r.date&&r.date.startsWith(filterMonth));
+
+  const classified = rows.map(r=>({...r,...classifyRow(r)}));
+  const filtered   = filterStatus ? classified.filter(r=>r.status===filterStatus) : classified;
+
+  // ── Recompute summary chips based on current month filter ──
+  const _present    = classified.filter(r=>r.status==="Present").length;
+  const _absent     = classified.filter(r=>r.status==="Absent").length;
+  const _weekOff    = classified.filter(r=>r.status==="Week Off").length;
+  const _onLeave    = classified.filter(r=>r.status==="On Leave").length;
+  const _plCount    = classified.filter(r=>r.status==="PL (Paid Leave)").length;
+  const _lopCount   = classified.filter(r=>r.status==="LOP (Loss of Pay)").length;
+  const _halfDay    = classified.filter(r=>r.status==="Half Day").length;
+  const _lateIn     = classified.filter(r=>r.flags&&r.flags.includes("Late In")).length;
+  const _earlyOut   = classified.filter(r=>r.flags&&r.flags.includes("Early Out")).length;
+  const _missingOut = classified.filter(r=>r.flags&&r.flags.includes("Missing Out")).length;
+  const {halfPLDays:_halfPL, halfLOPDays:_halfLOP} = calcHalfDayLeaves(classified, session.empId);
+  const _fmtD = v => v===0?'0':(v%1===0?String(v):v.toFixed(1));
+
+  const _chip=(bg,col,icon,label,val)=>
+    `<div style="display:flex;align-items:center;gap:6px;background:${bg};color:${col};padding:6px 12px;border-radius:99px;font-size:12px;font-weight:600">${icon} ${label} <strong>${val}</strong></div>`;
+  const summaryEl = document.getElementById("myatt-summary");
+  if(summaryEl){
+    summaryEl.innerHTML =
+      _chip("var(--green-soft)","#2D7A52","✅","Present",_present) +
+      _chip("#FEF0FF","#7A2D9A","🌙","Week Off",_weekOff) +
+      _chip("var(--blue-soft)","#2065A8","🏖","On Leave",_onLeave) +
+      ((_plCount||_halfPL>0)  ? _chip("var(--green-soft)","#0E6E56","📋","PL",_fmtD(_plCount+_halfPL)+" d"):"") +
+      ((_lopCount||_halfLOP>0)? _chip("var(--red-soft)","#8B2500","💸","LOP",_fmtD(_lopCount+_halfLOP)+" d"):"") +
+      (_halfDay   ? _chip("var(--purple-soft)","var(--purple)","🌗","Half Day",_halfDay):"") +
+      (_lateIn    ? _chip("var(--amber-soft)","#A06600","⏰","Late In",_lateIn):"") +
+      (_earlyOut  ? _chip("#FEF6FF","#7A2D9A","🚪","Early Out",_earlyOut):"") +
+      (_missingOut? _chip("var(--blue-soft)","#2065A8","❓","Missing Out",_missingOut):"");
+  }
+
+  const statusColor = s =>
+    s==="Present"?"bg-green":s==="Absent"?"bg-red":s==="Week Off"?"bg-gray":
+    s==="On Leave"?"bg-blue":s==="PL (Paid Leave)"?"bg-teal":
+    s==="LOP (Loss of Pay)"?"bg-red":s==="Half Day"?"bg-purple":"bg-amber";
+
+  // Eligibility: allow regularization for current month and previous month only
+  const canRegularize = r => {
+    // Cannot regularize leave/off days or manually-assigned LOP (nonWork shift rows)
+    // Shift-assigned LOP (no punches on a real shift) CAN be regularized
+    if(r.status==="Week Off"||r.status==="PL (Paid Leave)"||r.status==="On Leave") return false;
+    if(r.status==="LOP (Loss of Pay)"&&r.nonWork) return false;
+    // Restrict to current month and previous month only
+    if(!r.date) return false;
+    const rowMonth = r.date.slice(0,7); // "YYYY-MM"
+    const curMonthStr  = `${CY}-${String(CM+1).padStart(2,"0")}`;
+    const prevDate     = new Date(CY, CM-1, 1);
+    const prevMonthStr = `${prevDate.getFullYear()}-${String(prevDate.getMonth()+1).padStart(2,"0")}`;
+    return rowMonth === curMonthStr || rowMonth === prevMonthStr;
+  };
+
+  if(!S.regularizations) S.regularizations=[];
+  const emp2 = S.employees.find(e=>e.id===session.empId);
+
+  const tbody = document.getElementById("myatt-tbody");
+  tbody.innerHTML = filtered.map(r=>{
+    const shiftKey = normaliseShift(r.shift);
+    const sh = shiftKey && SHIFTS[shiftKey];
+    const shiftLabel = sh ? `${r.shift} <span style="font-size:11px;color:var(--text2)">(${sh.start}–${sh.end})</span>` : (r.shift||"—");
+    const flagBadges = (r.flags||[]).map(f=>`<span class="badge bg-amber" style="font-size:10px;padding:1px 7px">${f}</span>`).join(" ");
+
+    // Check existing reg request for this date
+    const existingReg = emp2 ? S.regularizations.find(rq=>rq.empId===emp2.id&&rq.date===r.date) : null;
+    let actionCell = '<span style="color:var(--text3);font-size:11px">—</span>';
+    if(existingReg){
+      const cls = existingReg.status==="Approved"?"reg-badge-approved":existingReg.status==="Rejected"?"reg-badge-rejected":"reg-badge-pending";
+      actionCell = `<span class="${cls}">${existingReg.status}</span>`;
+    } else if(canRegularize(r)){
+      actionCell = `<button class="btn" style="padding:3px 10px;font-size:11px;color:var(--accent);border-color:var(--accent)" onclick="openRegModal('${r.date}')">Regularize</button>`;
+    }
+
+    // Find approved reg for this row to show updated times and reason
+    const approvedReg2 = emp2 ? S.regularizations.find(rq=>rq.empId===emp2.id&&rq.date===r.date&&rq.status==="Approved") : null;
+    const inDisplay  = approvedReg2&&approvedReg2.newIn  ? `<span style="color:var(--green);font-weight:600">${approvedReg2.newIn}</span>`  : `<span style="font-weight:${r.inTime?"500":"400"};color:${r.inTime?"var(--text)":"var(--text3)"}">${r.inTime||"—"}</span>`;
+    const outDisplay = approvedReg2&&approvedReg2.newOut ? `<span style="color:var(--green);font-weight:600">${approvedReg2.newOut}</span>` : `<span style="font-weight:${r.outTime?"500":"400"};color:${r.outTime?"var(--text)":"var(--text3)"}">${r.outTime||"—"}</span>`;
+    const regNote    = approvedReg2 ? `<div style="font-size:10px;color:var(--green);margin-top:2px;font-style:italic" title="${approvedReg2.reason||""}">✔ Regularized${approvedReg2.reason?": "+approvedReg2.reason.slice(0,30)+(approvedReg2.reason.length>30?"…":""):""}</div>` : "";
+
+    return `<tr${approvedReg2?' style="background:rgba(76,175,125,.05)"':""}>
+      <td style="font-size:12px">${r.date||"—"}${regNote}</td>
+      <td style="font-size:12px;color:var(--text2)">${r.day||"—"}</td>
+      <td>${shiftLabel}</td>
+      <td>${inDisplay}</td>
+      <td>${outDisplay}</td>
+      <td style="font-size:12px;color:var(--text2)">${r.hoursM!=null?minsToHHMM(r.hoursM):"—"}</td>
+      <td>${(()=>{
+        // For Half Day rows, check what was actually deducted (PL or LOP)
+        if(r.status==="Half Day" && emp2){
+          const autoSrcR = new Set(["attendance","attendance-half","regularization"]);
+          const leavesR  = S.leaves.filter(l=>l.empId===emp2.id&&l.from===r.date&&autoSrcR.has(l.source));
+          const plR      = leavesR.filter(l=>!l.isLOP).reduce((s,l)=>s+l.days,0);
+          const lopR     = leavesR.filter(l=> l.isLOP).reduce((s,l)=>s+l.days,0);
+          let tag = "";
+          if(plR>0)  tag += `<span style="font-size:9px;background:var(--green-soft);color:#0E6E56;padding:1px 6px;border-radius:99px;margin-left:3px;font-weight:700">½PL</span>`;
+          if(lopR>0) tag += `<span style="font-size:9px;background:var(--red-soft);color:#8B2500;padding:1px 6px;border-radius:99px;margin-left:3px;font-weight:700">½LOP</span>`;
+          if(!tag && r.halfPL) tag = `<span style="font-size:9px;opacity:.8;margin-left:3px">(½PL)</span>`;
+          return `<span class="badge ${statusColor(r.status)}" style="font-size:11px">${r.status}</span>${tag}`;
+        }
+        return `<span class="badge ${statusColor(r.status)}" style="font-size:11px">${r.status}</span>`;
+      })()}</td>
+      <td>${flagBadges||'<span style="color:var(--text3);font-size:11px">—</span>'}</td>
+      <td>${actionCell}</td>
+    </tr>`;
+  }).join("") || `<tr><td colspan="9"><div class="empty-state"><p>No records match the selected filters</p></div></td></tr>`;
+}
+function renderEmployee(){
+  const emp=S.employees.find(e=>e.id===session.empId);
+  document.getElementById("emp-hello").textContent=`Hello, ${emp.name.split(" ")[0]}`;
+  document.getElementById("emp-sub").textContent=`${emp.branch} · ${emp.desig} · ${MN[CM]} ${CY}`;
+  document.getElementById("emp-branch-label").textContent=emp.branch+" branch";
+  document.getElementById("emp-avatar-chip").textContent=initials(emp.name);
+  document.getElementById("emp-chip-name").textContent=emp.name;
+  document.getElementById("emp-chip-role").textContent=emp.desig;
+  renderEmpMetrics(emp);renderEmpBreakdown(emp);renderEmpHist(emp);
+  const today=now.toISOString().split("T")[0];
+  document.getElementById("el-from").value=today;document.getElementById("el-to").value=today;updatePreview();
+}
+function renderEmpMetrics(emp){
+  const tc=totalCredited(emp),cf=emp.cf||0,ud=usedApproved(emp.id),bal=balance(emp),pend=pendingDays(emp.id);
+  document.getElementById("emp-metrics").innerHTML=`
+    <div class="metric-card"><div class="metric-label">Carry forward</div><div class="metric-value" style="color:var(--green)">${cf}</div><div class="metric-sub">Opening balance</div></div>
+    <div class="metric-card"><div class="metric-label">Accrued</div><div class="metric-value" style="color:var(--accent)">${tc}</div><div class="metric-sub">${plMonths(emp)} months × 2</div></div>
+    <div class="metric-card"><div class="metric-label">Used</div><div class="metric-value" style="color:var(--amber)">${ud}</div><div class="metric-sub">Approved leaves</div></div>
+    <div class="metric-card"><div class="metric-label">Available</div><div class="metric-value" style="color:var(--green)">${bal}</div><div class="metric-sub">${pend?`${pend} pending`:""}&nbsp;</div></div>`;
+}
+function renderEmpBreakdown(emp){
+  const tc=totalCredited(emp),cf=emp.cf||0,ud=usedApproved(emp.id),bal=balance(emp);
+  const total=cf+tc,pct=total>0?Math.round((bal/total)*100):0;
+  document.getElementById("emp-breakdown").innerHTML=`
+    <div class="info-row"><span class="info-label">Carry forward (opening)</span><span style="color:var(--green);font-weight:600">+ ${cf} PL</span></div>
+    ${emp.plStart?`<div class="info-row"><span class="info-label">PL active from</span><span>${fmtM(emp.plStart)}</span></div><div class="info-row"><span class="info-label">Accrued (${plMonths(emp)} months × 2)</span><span style="color:var(--accent);font-weight:600">+ ${tc} PL</span></div>`:`<div class="info-row"><span class="info-label">Monthly accrual</span><span style="color:var(--color-text-tertiary)">Not activated</span></div>`}
+    <div class="info-row"><span class="info-label">Total earned</span><span style="font-weight:500">${total} PL</span></div>
+    <div class="info-row"><span class="info-label">Used (approved)</span><span style="color:var(--amber);font-weight:600">− ${ud} PL</span></div>
+    <div class="info-row" style="border:none"><span style="font-weight:500">Available balance</span><span style="font-weight:700;color:var(--green);font-size:16px">${bal} PL</span></div>
+    <div class="prog-track"><div class="prog-fill" style="width:${pct}%"></div></div>
+    <div style="font-size:11px;color:var(--color-text-tertiary)">${pct}% of total earned remaining</div>`;
+}
+function renderEmpHist(emp){
+  const leaves=S.leaves.filter(l=>l.empId===emp.id).reverse();
+  document.getElementById("emp-hist").innerHTML=leaves.map(l=>{
+    const cls=l.status==="Approved"?"bg-green":l.status==="Rejected"?"bg-red":"bg-amber";
+    const src=l.source==="admin"?`<span class="chip-admin">Admin</span>`:`<span class="chip-emp">You</span>`;
+    return`<tr><td>${fmtD(l.from)}</td><td>${fmtD(l.to)}</td><td>${l.days}</td><td style="font-size:12px">${fmtM(l.month||monthOf(l.from))}</td><td style="font-size:12px;color:var(--color-text-secondary)">${l.note||"—"}</td><td>${src}</td><td><span class="badge ${cls}">${l.status}</span></td></tr>`;
+  }).join("")||`<tr><td colspan="7"><div class="empty-state"><p>No leave history yet</p></div></td></tr>`;
+}
+function updatePreview(){
+  const from=document.getElementById("el-from").value,to=document.getElementById("el-to").value;
+  const isHalf=document.getElementById("el-halfday").value==="half";
+  const emp=S.employees.find(e=>e.id===session?.empId);
+  if(!emp||!from||!to||parseDate(from)>parseDate(to)){document.getElementById("el-preview").textContent="";return;}
+  const days=isHalf?0.5:workDays(parseDate(from),parseDate(to)),bal=availBal(emp),ok=days<=bal;
+  const typeLabel=isHalf?"half day":days+" working day(s)";
+  document.getElementById("el-preview").innerHTML=`<div style="padding:8px 12px;border-radius:8px;background:${ok?"var(--green-soft)":"var(--amber-soft)"};color:${ok?"#2D7A52":"#A06600"};font-size:13px"><strong>${isHalf?"0.5":days}</strong> ${isHalf?"PL (half day)":"working day(s)"} &nbsp;·&nbsp; Your balance: <strong>${bal} PL</strong>${!ok?" — insufficient balance":""}</div>`;
+}
+function applyLeave(){
+  const emp=S.employees.find(e=>e.id===session.empId);
+  if(!emp.plStart&&(emp.cf||0)===0)return showAlert("Your PL is not activated. Contact admin.","e");
+  const from=document.getElementById("el-from").value,to=document.getElementById("el-to").value;
+  const isHalf=document.getElementById("el-halfday").value==="half";
+  const note=document.getElementById("el-note").value.trim();
+  if(!from||!to)return showAlert("Select dates","e");
+  if(parseDate(from)>parseDate(to))return showAlert("From date must be before to date","e");
+  const days=isHalf?0.5:workDays(parseDate(from),parseDate(to));
+  if(days===0)return showAlert("No working days in selected range","e");
+  if(days>availBal(emp))return showAlert(`Insufficient PL. You have ${availBal(emp)} PL available`,"e");
+  S.leaves.push({id:S.nextLeaveId++,empId:emp.id,from,to,days,month:monthOf(from),note,appliedOn:now.toISOString().split("T")[0],status:"Pending",source:"employee",halfDay:isHalf});
+  scheduleSave();showAlert(`Leave applied for ${isHalf?"0.5 (half day)":days+" day(s)"} — pending admin approval`,"s");
+  document.getElementById("el-note").value="";document.getElementById("el-halfday").value="full";eTab("dashboard");renderEmployee();
+}
+async function changeEmpPass(){
+  const emp=S.employees.find(e=>e.id===session.empId);
+  const cur=document.getElementById("ep-cur").value.trim();
+  const np=document.getElementById("ep-new").value.trim();
+  const cp=document.getElementById("ep-conf").value.trim();
+  if(!cur||!np)return showAlert("Fill in all fields","e");
+  if(np!==cp)return showAlert("Passwords don't match","e");
+  if(np.length<6)return showAlert("New password must be at least 6 characters","e");
+
+  // Verify current password by attempting sign-in
+  const {error:verifyErr}=await supabaseClient.auth.signInWithPassword({
+    email: emp.auth_email,
+    password: cur
+  });
+  if(verifyErr)return showAlert("Current password is incorrect","e");
+
+  // Update to new password
+  const {error:updateErr}=await supabaseClient.auth.updateUser({password:np});
+  if(updateErr)return showAlert("Failed to update password: "+updateErr.message,"e");
+
+  document.getElementById("ep-cur").value="";
+  document.getElementById("ep-new").value="";
+  document.getElementById("ep-conf").value="";
+  showAlert("Password updated successfully","s");
+}
+
+
+// ═══════════════════════════════════════════
+//  ATTENDANCE MODULE
+// ═══════════════════════════════════════════
+
+// Shift definitions  (1st=10-19, Mid=11-20, 12-9=12-21, 2nd=13-22)
+const SHIFTS = {
+  '1st':  { label:'1st  (10–19)', start:'10:00', end:'19:00', startM:600,  endM:1140 },
+  'Mid':  { label:'Mid  (11–20)', start:'11:00', end:'20:00', startM:660,  endM:1200 },
+  '12-9': { label:'12-9 (12–21)', start:'12:00', end:'21:00', startM:720,  endM:1260 },
+  '2nd':  { label:'2nd  (13–22)', start:'13:00', end:'22:00', startM:780,  endM:1320 },
+};
+
+let attData = []; // [{name, date, day, shift, inTime, outTime}]
+
+function toMins(t){
+  if(!t||typeof t!=='string'||!t.includes(':'))return null;
+  const [h,m]=t.trim().split(':').map(Number);
+  return isNaN(h)||isNaN(m)?null:h*60+m;
+}
+function minsToHHMM(m){
+  if(m===null||m===undefined||m<0)return '—';
+  return Math.floor(m/60)+'h '+(m%60).toString().padStart(2,'0')+'m';
+}
+function fmtTime(t){ return t||'—'; }
+
+function normaliseShift(raw){
+  if(!raw) return null;
+  const s = raw.trim().toLowerCase();
+  if(s.includes('half')) return 'Half Day';
+  if(s.startsWith('1st')) return '1st';
+  if(s.startsWith('mid')) return 'Mid';
+  if(s==='12-9'||s.startsWith('12-9')) return '12-9';
+  if(s.startsWith('2nd')) return '2nd';
+  return null; // non-working: WeekOff, PL, LOP, Leave, IGN, MRM, etc.
+}
+
+function classifyRow(row){
+  // Apply any approved regularization patches first (mutate a shallow copy)
+  const r = Object.assign({}, row);
+  if(S && S.regularizations){
+    const patch = S.regularizations.find(rq =>
+      rq.status==="Approved" && rq.date===r.date &&
+      (rq.empId ? S.employees.some(e=>e.id===rq.empId &&
+        (e.name.trim().toLowerCase()===(r.name||"").trim().toLowerCase() ||
+         e.name.trim().toLowerCase().startsWith((r.name||"").trim().toLowerCase()) ||
+         (r.name||"").trim().toLowerCase().startsWith(e.name.trim().split(" ")[0].toLowerCase()))) : false)
+    );
+    if(patch){
+      if(patch.newIn)    r.inTime  = patch.newIn;
+      if(patch.newOut)   r.outTime = patch.newOut;
+      if(patch.newShift){ r.shift = patch.newShift; r.nonWork = ["PL","LOP","WeekOff"].includes(patch.newShift); }
+      r._regularized = true;
+      r._regReason   = patch.reason;
+
+      // If admin chose an explicit status override, return it immediately —
+      // no need to re-derive from punch times.
+      if(patch.newStatus){
+        const st = patch.newStatus;
+        // Compute hours if times are available (useful for Present / Half Day display)
+        const inM2  = toMins(r.inTime);
+        const outM2 = toMins(r.outTime);
+        let hoursM2 = null;
+        if(inM2!==null && outM2!==null){ hoursM2=outM2-inM2; if(hoursM2<0) hoursM2+=1440; }
+        const isHalfSt  = st==="Half Day";
+        const isPLSt    = st==="PL (Paid Leave)";
+        const isLOPSt   = st==="LOP (Loss of Pay)";
+        const isWOSt    = st==="Week Off";
+        const isMRMSt   = st==="MRM";
+        return {
+          status  : isMRMSt ? "Present" : st,
+          hoursM  : hoursM2,
+          flags   : isMRMSt ? ["MRM"] : [],
+          halfPL  : isHalfSt,
+          _regularized : true,
+          _regReason   : patch.reason,
+        };
+      }
+    }
+  }
+
+  // Non-working shift: WeekOff, PL, LOP, Leave, IGN etc. — MRM is special: treated as Present
+  if(r.nonWork || !normaliseShift(r.shift)){
+    const sl = (r.shift || '').trim().toLowerCase();
+    if(sl==='mrm')
+      return { status:'Present',            hoursM:null, flags:['MRM'], _regularized:r._regularized, _regReason:r._regReason };
+    if(sl==='weekoff' || sl==='week off' || sl==='off')
+      return { status:'Week Off',          hoursM:null, flags:[], _regularized:r._regularized, _regReason:r._regReason };
+    if(sl==='pl' || sl.includes('paid leave'))
+      return { status:'PL (Paid Leave)',   hoursM:null, flags:[], _regularized:r._regularized, _regReason:r._regReason };
+    if(sl==='lop' || sl.includes('loss of pay'))
+      return { status:'LOP (Loss of Pay)', hoursM:null, flags:[], _regularized:r._regularized, _regReason:r._regReason };
+    if(sl.includes('leave'))
+      return { status:'On Leave',          hoursM:null, flags:[], _regularized:r._regularized, _regReason:r._regReason };
+    if(sl==='absent')
+      return { status:'Absent',            hoursM:null, flags:[], _regularized:r._regularized, _regReason:r._regReason };
+    return { status:'Absent',             hoursM:null, flags:[], _regularized:r._regularized, _regReason:r._regReason };
+  }
+
+  const shiftKey = normaliseShift(r.shift);
+
+  // Explicit half-day shift from Excel
+  if(shiftKey === 'Half Day'){
+    const inM  = toMins(r.inTime);
+    const outM = toMins(r.outTime);
+    let hoursM = null;
+    if(inM!==null && outM!==null){ hoursM=outM-inM; if(hoursM<0)hoursM+=1440; }
+    return { status:'Half Day', hoursM, flags:[], halfPL:true, _regularized:r._regularized, _regReason:r._regReason };
+  }
+
+  const sh = SHIFTS[shiftKey] || SHIFTS['1st'];
+  const inM  = toMins(r.inTime);
+  const outM = toMins(r.outTime);
+
+  // No punch at all → LOP (shift assigned but employee did not attend)
+  if(!r.inTime && !r.outTime)
+    return { status:'LOP (Loss of Pay)', hoursM:null, flags:[], _regularized:r._regularized, _regReason:r._regReason };
+
+  // RULE: Only one punch (missing out) → Half Day + half PL deducted
+  if(r.inTime && !r.outTime){
+    return { status:'Half Day', hoursM:null, flags:['Missing Out'], halfPL:true,
+             _regularized:r._regularized, _regReason:r._regReason };
+  }
+
+  // RULE: Late > 30 mins → Half Day + half PL
+  if(inM !== null && inM > sh.startM + 30){
+    const lateBy = inM - sh.startM;
+    let hoursM = null;
+    if(inM!==null && outM!==null){ hoursM=outM-inM; if(hoursM<0)hoursM+=1440; }
+    return { status:'Half Day', hoursM, flags:[`Late In (${lateBy}m)`], halfPL:true,
+             _regularized:r._regularized, _regReason:r._regReason };
+  }
+
+  const flags = [];
+  if(inM !== null && inM > sh.startM + 15) flags.push('Late In');
+  if(outM !== null && outM < sh.endM - 15) flags.push('Early Out');
+
+  let hoursM = null;
+  if(inM!==null && outM!==null){
+    hoursM = outM - inM;
+    if(hoursM < 0) hoursM += 1440;
+  }
+
+  // RULE: Working hours < 5 hours (300 mins) → Half Day + half PL deducted
+  if(hoursM !== null && hoursM < 300){
+    return { status:'Half Day', hoursM, flags, halfPL:true,
+             _regularized:r._regularized, _regReason:r._regReason };
+  }
+
+  return { status:'Present', hoursM, flags, _regularized:r._regularized, _regReason:r._regReason };
+}
+
+function handleAttUpload(input){
+  const file = input.files[0]; if(!file) return;
+  const msg = document.getElementById('att-upload-msg');
+  const reader = new FileReader();
+  reader.onload = function(e){
+    try{
+      const wb = XLSX.read(e.target.result, {type:'array', raw:false, cellText:true});
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:'', raw:false});
+
+      const parsed = [];
+      let currentName = '';
+      let inDataBlock = false;
+
+      // Non-working shift keywords — skip classification
+      const NON_WORK = ['weekoff','week off','leave','ign','mrm','holiday','off','pl','lop'];
+      const isNonWork = s => NON_WORK.some(k => s.toLowerCase().includes(k));
+
+      // Detect summary rows like "Present : 6  Absent : 3 ..."
+      const isSummaryRow = row => {
+        const joined = row.join(' ').toLowerCase();
+        return joined.includes('present :') || joined.includes('ot hrs') || joined.includes('working hrs');
+      };
+
+      // Detect employee header row — supports two formats:
+      //   Format A (biometric full): "Paycode:- | 101 | Name:- | VRUSHALI | ..."
+      //   Format B (simple):         any cell pattern "Name:- | VRUSHALI" anywhere in the row,
+      //                               OR a row where one cell is exactly "Name:-" and next has the name,
+      //                               OR a merged-cell style where col 0 contains "paycode" OR col 2/any contains "name:-"
+      const isHeaderInfoRow = row => {
+        const r = row.map(v=>String(v||'').trim());
+        // Check for "Name:-" keyword anywhere in the row followed by a non-empty value
+        for(let ci=0; ci<r.length-1; ci++){
+          if(r[ci].toLowerCase().replace(/\s/g,'').startsWith('name') && r[ci].includes('-')){
+            if(r[ci+1]) return true; // next cell has the name
+          }
+        }
+        // Also match if any cell alone is "name:-" with value in same or next cell
+        return r.some(c => /^name\s*[:\-]+$/i.test(c.replace(/\s/g,'')));
+      };
+
+      // Extract name from a header info row (works for both formats)
+      const extractName = row => {
+        const r = row.map(v=>String(v||'').trim());
+        for(let ci=0; ci<r.length-1; ci++){
+          if(r[ci].toLowerCase().replace(/\s/g,'').startsWith('name') && r[ci].includes('-')){
+            if(r[ci+1]) return r[ci+1];
+          }
+        }
+        // Fallback: return the cell after a "Name:-"-like cell anywhere
+        for(let ci=0; ci<r.length; ci++){
+          if(/^name\s*[:\-]+$/i.test(r[ci].replace(/\s/g,'')) && r[ci+1]) return r[ci+1];
+        }
+        return '';
+      };
+
+      // Detect column header row: "Date | Day | Shift | In | Out ..."
+      const isColHeader = row => {
+        const r = row.map(v=>String(v||'').trim().toLowerCase());
+        return r[0]==='date' && r[1]==='day';
+      };
+
+      for(let i=0; i<rows.length; i++){
+        const raw = rows[i];
+        const row = raw.map(v=>String(v||'').trim());
+
+        if(isSummaryRow(row)) { inDataBlock=false; continue; }
+        if(isHeaderInfoRow(row)){
+          const extracted = extractName(row);
+          if(extracted) currentName = extracted;
+          inDataBlock=false; continue;
+        }
+        if(isColHeader(row)){ inDataBlock=true; continue; }
+        if(!inDataBlock || !currentName || !row[0]) continue;
+
+        // Parse date DD/MM/YYYY → YYYY-MM-DD
+        let dateStr = row[0];
+        const dm = dateStr.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+        if(dm) dateStr = `${dm[3]}-${dm[2].padStart(2,'0')}-${dm[1].padStart(2,'0')}`;
+        else continue; // skip non-date rows
+
+        const day   = row[1] || '';
+        const shift = row[2] || '';
+        const inTime  = row[3] || '';
+        const outTime = row[4] || '';
+
+        // Normalise HH:MM
+        const normT = t => {
+          if(!t) return '';
+          const m = t.match(/(\d{1,2}):(\d{2})/);
+          return m ? `${m[1].padStart(2,'0')}:${m[2]}` : '';
+        };
+
+        parsed.push({
+          name: currentName,
+          date: dateStr,
+          day,
+          shift,
+          inTime:  normT(inTime),
+          outTime: normT(outTime),
+          nonWork: isNonWork(shift),
+        });
+      }
+
+      if(!parsed.length){
+        showAttMsg('⚠ No data rows found. Make sure the file matches the expected format.','warn');
+        return;
+      }
+
+      // MERGE: keep existing records and add/update new ones (deduplicate by name+date)
+      const existingMap = new Map(attData.map(r=>`${r.name}|||${r.date}`).map((k,i)=>[k,i]));
+      let added=0, updated=0;
+      for(const row of parsed){
+        const key=`${row.name}|||${row.date}`;
+        if(existingMap.has(key)){
+          attData[existingMap.get(key)]=row;
+          updated++;
+        } else {
+          attData.push(row);
+          added++;
+        }
+      }
+
+      // Process PL/halfPL rows from this upload — deduct from employee PL balance (or mark LOP)
+      const today = new Date().toISOString().split("T")[0];
+      for(const row of parsed){
+        const cl = classifyRow(row);
+        const sl = (row.shift||"").trim().toLowerCase();
+        const isPL     = sl==='pl'||sl.includes('paid leave');
+        const isHalfPL = cl.halfPL === true; // covers Missing Out, Late>30, explicit Half shift, PL-half
+        const isFullPL = isPL && !isHalfPL;
+        if(!isPL && !isHalfPL) continue;
+
+        // Find employee
+        const empObj = S.employees.find(e=>{
+          const n=(row.name||"").trim().toLowerCase();
+          return e.name.trim().toLowerCase()===n||
+                 e.name.trim().toLowerCase().startsWith(n+" ")||
+                 n.startsWith(e.name.trim().split(" ")[0].toLowerCase());
+        });
+        if(!empObj) continue;
+
+        const days = isHalfPL ? 0.5 : 1;
+        const month = row.date ? row.date.slice(0,7) : monthOf(today);
+        const noteBase = isHalfPL
+          ? (cl.flags&&cl.flags.length ? `Half day (${cl.flags[0]}) — 0.5 PL` : "Half day — 0.5 PL")
+          : "Full PL — from attendance upload";
+        // Check if leave record already exists for this date to avoid duplicates
+        const exists = S.leaves.some(l=>l.empId===empObj.id&&l.from===row.date&&(l.source==="attendance"||l.source==="attendance-half"));
+        if(exists) continue;
+
+        const bal = balance(empObj);
+        if(bal >= days){
+          S.leaves.push({id:S.nextLeaveId++,empId:empObj.id,from:row.date,to:row.date,days,month,note:noteBase,appliedOn:today,status:"Approved",source:isHalfPL?"attendance-half":"attendance",halfDay:isHalfPL});
+        } else if(bal > 0 && bal < days){
+          // Partial PL, rest LOP
+          S.leaves.push({id:S.nextLeaveId++,empId:empObj.id,from:row.date,to:row.date,days:bal,month,note:noteBase+" (PL portion)",appliedOn:today,status:"Approved",source:isHalfPL?"attendance-half":"attendance",halfDay:isHalfPL});
+          S.leaves.push({id:S.nextLeaveId++,empId:empObj.id,from:row.date,to:row.date,days:days-bal,month,note:"LOP — insufficient PL balance",appliedOn:today,status:"Approved",source:isHalfPL?"attendance-half":"attendance",isLOP:true});
+          const rowInAtt = attData.find(r=>r.name===row.name&&r.date===row.date);
+          if(rowInAtt) rowInAtt._partialLOP=true;
+        } else {
+          // No PL left — full LOP
+          S.leaves.push({id:S.nextLeaveId++,empId:empObj.id,from:row.date,to:row.date,days,month,note:"LOP — no PL balance remaining",appliedOn:today,status:"Approved",source:isHalfPL?"attendance-half":"attendance",isLOP:true});
+          if(!isHalfPL){
+            // Full PL with no balance → mark row as LOP in display
+            const rowInAtt = attData.find(r=>r.name===row.name&&r.date===row.date);
+            if(rowInAtt){ rowInAtt.shift='LOP'; rowInAtt.nonWork=true; }
+          }
+        }
+      }
+
+      scheduleSave();
+      populateAttFilters();
+      renderAttTable();
+      renderAdmAttMetrics();
+      document.getElementById('att-results').style.display='';
+      const empCount = new Set(parsed.map(r=>r.name)).size;
+      showAttMsg(`✓ Loaded ${parsed.length} records for ${empCount} employees (${added} new, ${updated} updated).`,'ok');
+      document.getElementById("att-clear-btn").style.display="";
+    } catch(err){
+      showAttMsg('❌ Error reading file: '+err.message,'err');
+    }
+    input.value='';
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+async function deleteFilteredAtt(){
+  const empF   = document.getElementById("att-filter-emp")?.value||"";
+  const dateF  = document.getElementById("att-filter-date")?.value||"";
+  const monthF = document.getElementById("att-filter-month")?.value||"";
+  const branchF= document.getElementById("att-filter-branch")?.value||"";
+  let desc = "all attendance records";
+  if(empF) desc = `records for ${empF}`;
+  else if(branchF) desc = `records for ${branchF} branch`;
+  if(monthF && !dateF){ const[y,m]=monthF.split('-'); desc += ` in ${MN[parseInt(m)-1]} ${y}`; }
+  if(dateF) desc += ` on ${dateF}`;
+  if(!confirm(`Delete ${desc}?`)) return;
+  const before = attData.length;
+  // Identify rows being removed before filtering
+  const toRemove = attData.filter(r=>{
+    if(branchF && getEmpBranch(r.name)!==branchF) return false;
+    if(monthF  && !(r.date&&r.date.startsWith(monthF))) return false;
+    if(empF    && r.name!==empF) return false;
+    if(dateF   && r.date!==dateF) return false;
+    return true;
+  });
+  attData = attData.filter(r=>{
+    if(branchF && getEmpBranch(r.name)!==branchF) return true;
+    if(monthF  && !(r.date&&r.date.startsWith(monthF))) return true;
+    if(empF    && r.name!==empF) return true;
+    if(dateF   && r.date!==dateF) return true;
+    return false;
+  });
+  // Delete removed rows from Supabase by emp_id+date
+  const empByName = Object.fromEntries(S.employees.map(e=>[e.name.trim().toLowerCase(), e.id]));
+  for(const r of toRemove){
+    const empId = r.emp_id || empByName[r.name?.trim().toLowerCase()];
+    if(empId && r.date) await supabaseClient.from("attendance").delete().eq("emp_id",empId).eq("date",r.date);
+  }
+  const removed = before - attData.length;
+  if(!attData.length){
+    document.getElementById("att-results").style.display="none";
+    document.getElementById("att-clear-btn").style.display="none";
+  } else {
+    populateAttFilters();
+    renderAttTable();
+  }
+  renderAdmin();
+  showAlert(`Deleted ${removed} attendance record(s)`,"s");
+}
+
+async function clearAttData(){
+  if(!attData.length){showAlert("No attendance data to clear","e");return;}
+  // Ask if user wants to also remove auto-created attendance leave records
+  const removeLeaves = confirm("Clear all uploaded attendance data?\n\nClick OK to also remove auto-created attendance leave records (PL/LOP from uploads).\nClick Cancel to clear attendance display only.");
+  attData=[];
+  // Delete all attendance rows from Supabase
+  await supabaseClient.from("attendance").delete().neq("id", 0);
+  if(removeLeaves){
+    S.leaves = S.leaves.filter(l=>l.source!=="attendance"&&l.source!=="attendance-half");
+    // Delete attendance-sourced leaves from Supabase
+    await supabaseClient.from("leaves").delete().in("source", ["attendance","attendance-half"]);
+  }
+  document.getElementById("att-results").style.display="none";
+  document.getElementById("att-upload-msg").style.display="none";
+  document.getElementById("att-clear-btn").style.display="none";
+  renderAdmin();
+  showAlert("Attendance data cleared","s");
+}
+
+function showAttMsg(text, type){
+  const el=document.getElementById('att-upload-msg');
+  el.style.display='block';
+  if(type==='ok'){el.style.background='var(--green-soft)';el.style.color='#2D7A52';el.style.border='1px solid #B0E0C4';}
+  else if(type==='warn'){el.style.background='var(--amber-soft)';el.style.color='#A06600';el.style.border='1px solid #E8C97A';}
+  else{el.style.background='var(--red-soft)';el.style.color='#B83333';el.style.border='1px solid #F5C0C0';}
+  el.textContent=text;
+}
+
+function onAttBranchChange(){
+  populateAttFilters();
+  renderAttTable();
+}
+
+function getEmpBranch(name){
+  // Match by first name (uppercased in Excel) to employee record
+  const n = name.trim().toLowerCase();
+  const emp = S.employees.find(e =>
+    e.name.toLowerCase() === n ||
+    e.name.toLowerCase().startsWith(n+' ') ||
+    n.startsWith(e.name.split(' ')[0].toLowerCase())
+  );
+  return emp ? emp.branch : '';
+}
+
+function populateAttFilters(){
+  const branchF = document.getElementById('att-filter-branch')?.value||'';
+  const monthF  = document.getElementById('att-filter-month')?.value||'';
+  let filteredRows = attData;
+  if(branchF) filteredRows = filteredRows.filter(r=>getEmpBranch(r.name)===branchF);
+
+  // Populate months
+  const monSel = document.getElementById('att-filter-month');
+  if(monSel){
+    const curMon = monSel.value;
+    const allMonths = [...new Set(attData.map(r=>r.date?r.date.slice(0,7):'').filter(Boolean))].sort().reverse();
+    monSel.innerHTML = '<option value="">All months</option>' +
+      allMonths.map(m=>{ const[y,mo]=m.split('-'); return `<option value="${m}">${MN[parseInt(mo)-1]} ${y}</option>`; }).join('');
+    if(curMon && allMonths.includes(curMon)) monSel.value = curMon;
+  }
+
+  // Filter employees and dates by current month selection
+  const activeMonth = document.getElementById('att-filter-month')?.value||'';
+  let scopedRows = filteredRows;
+  if(activeMonth) scopedRows = scopedRows.filter(r=>r.date&&r.date.startsWith(activeMonth));
+
+  const filteredNames = [...new Set(scopedRows.map(r=>r.name))].sort();
+  document.getElementById('att-filter-emp').innerHTML=
+    '<option value="">All employees</option>'+filteredNames.map(n=>`<option>${n}</option>`).join('');
+  const dates=[...new Set(scopedRows.map(r=>r.date))].sort();
+  document.getElementById('att-filter-date').innerHTML=
+    '<option value="">All dates</option>'+dates.map(d=>`<option value="${d}">${fmtD(d)}</option>`).join('');
+}
+
+function onAttMonthChange(){
+  // Re-populate emp and date dropdowns scoped to the chosen month, then re-render
+  populateAttFilters();
+  // Reset emp/date selectors when month changes
+  const empSel = document.getElementById('att-filter-emp');
+  const dateSel = document.getElementById('att-filter-date');
+  if(empSel) empSel.value = '';
+  if(dateSel) dateSel.value = '';
+  renderAttTable();
+}
+
+function renderAttTable(){
+  const empF    = document.getElementById('att-filter-emp')?.value||'';
+  const dateF   = document.getElementById('att-filter-date')?.value||'';
+  const monthF  = document.getElementById('att-filter-month')?.value||'';
+  const statF   = document.getElementById('att-filter-status')?.value||'';
+  const branchF2 = document.getElementById('att-filter-branch')?.value||'';
+
+  let rows = attData;
+  if(branchF2) rows = rows.filter(r=>getEmpBranch(r.name)===branchF2);
+  if(monthF)  rows = rows.filter(r=>r.date&&r.date.startsWith(monthF));
+  if(empF)    rows = rows.filter(r=>r.name===empF);
+  if(dateF)   rows = rows.filter(r=>r.date===dateF);
+
+  // Classify all
+  const classified = rows.map(r=>({...r,...classifyRow(r)}));
+  const filtered = statF ? classified.filter(r=>r.status===statF||r.flags.includes(statF)) : classified;
+
+  // Summary chips
+  const total=classified.length;
+  const present=classified.filter(r=>r.status==='Present'||r.status==='Half Day'||r.status==='MRM').length;
+  const absent=classified.filter(r=>r.status==='Absent'||r.status==='LOP (Loss of Pay)').length;
+  const lateIn=classified.filter(r=>r.flags.includes('Late In')).length;
+  const earlyOut=classified.filter(r=>r.flags.includes('Early Out')).length;
+  const missingOut=classified.filter(r=>r.flags.includes('Missing Out')).length;
+
+  const weekOff   = classified.filter(r=>r.status==='Week Off').length;
+  const onLeave   = classified.filter(r=>r.status==='On Leave').length;
+  const halfDay   = classified.filter(r=>r.status==='Half Day').length;
+  const plCount   = classified.filter(r=>r.status==='PL (Paid Leave)').length;
+  const lopCount  = classified.filter(r=>r.status==='LOP (Loss of Pay)').length;
+  // For admin view: aggregate half-day PL/LOP across all employees shown
+  const autoSrcAdm = new Set(["attendance","attendance-half","regularization"]);
+  let admHalfPL=0, admHalfLOP=0;
+  classified.filter(r=>r.status==='Half Day').forEach(r=>{
+    const rowEmpAdm = S.employees.find(e=>{
+      const n=(r.name||'').trim().toLowerCase();
+      return e.name.trim().toLowerCase()===n||e.name.trim().toLowerCase().startsWith(n)||n.startsWith(e.name.trim().split(' ')[0].toLowerCase());
+    });
+    if(!rowEmpAdm) return;
+    const lv = S.leaves.filter(l=>l.empId===rowEmpAdm.id&&l.from===r.date&&autoSrcAdm.has(l.source));
+    admHalfPL  += lv.filter(l=>!l.isLOP).reduce((s,l)=>s+l.days,0);
+    admHalfLOP += lv.filter(l=> l.isLOP).reduce((s,l)=>s+l.days,0);
+  });
+  const _admFmt = v => v===0?'0':(v%1===0?String(v):v.toFixed(1));
+  const admChip=(bg,col,icon,label,val)=>
+    `<div style="display:flex;align-items:center;gap:6px;background:${bg};color:${col};padding:6px 12px;border-radius:99px;font-size:12px;font-weight:600">${icon} ${label} <strong>${val}</strong></div>`;
+  document.getElementById('att-summary').innerHTML=
+    admChip("var(--green-soft)","#2D7A52","✅","Present",present) +
+    admChip("#FEF0FF","#7A2D9A","🌙","Week Off",weekOff) +
+    admChip("var(--blue-soft)","#2065A8","🏖","On Leave",onLeave) +
+    ((plCount||admHalfPL>0)  ? admChip("var(--green-soft)","#0E6E56","📋","PL",_admFmt(plCount+admHalfPL)+" d"):"") +
+    ((lopCount||admHalfLOP>0)? admChip("var(--red-soft)","#8B2500","💸","LOP",_admFmt(lopCount+admHalfLOP)+" d"):"") +
+    admChip("var(--purple-soft)","var(--purple)","🌗","Half Day",halfDay) +
+    admChip("var(--amber-soft)","#A06600","⏰","Late In",lateIn) +
+    admChip("#FEF6FF","#7A2D9A","🚪","Early Out",earlyOut) +
+    admChip("var(--blue-soft)","#2065A8","❓","Missing Out",missingOut);
+
+  if(!filtered.length){
+    document.getElementById('att-tbl-body').innerHTML=`<tr><td colspan="10"><div class="empty-state"><p>🔍</p><p>No records match the filter</p></div></td></tr>`;
+    return;
+  }
+
+  document.getElementById('att-tbl-body').innerHTML = filtered.map(r=>{
+    const sh = SHIFTS[r.shift]||SHIFTS['1st'];
+    const _ns = normaliseShift(r.shift);
+    const shiftBadge = _ns && SHIFTS[_ns] ? 'bg-blue' : (r.shift&&r.shift.trim().toLowerCase().startsWith('weekoff')?'bg-gray':r.shift&&r.shift.trim().toLowerCase().startsWith('pl')?'bg-green':r.shift&&r.shift.trim().toLowerCase().startsWith('lop')?'bg-red':'bg-gray');
+    const shiftDisplay = _ns && SHIFTS[_ns] ? SHIFTS[_ns].label : (r.shift||'—');
+    const statusColor = r.status==='Present'?'bg-green':
+      r.status==='Absent'?'bg-red':
+      r.status==='Week Off'?'bg-gray':
+      r.status==='On Leave'?'bg-blue':
+      r.status==='PL (Paid Leave)'?'bg-teal':
+      r.status==='LOP (Loss of Pay)'?'bg-red':
+      r.status==='Half Day'?'bg-purple':
+      'bg-amber';
+    // Find emp for this row
+    const rowEmpObj = S.employees.find(e=>{
+      const n=(r.name||"").trim().toLowerCase();
+      return e.name.trim().toLowerCase()===n||e.name.trim().toLowerCase().startsWith(n)||n.startsWith(e.name.trim().split(" ")[0].toLowerCase());
+    });
+    // Check regularization state
+    const existingAdmReg = rowEmpObj ? S.regularizations.find(rq=>rq.empId===rowEmpObj.id&&rq.date===r.date) : null;
+    const approvedAdmReg = existingAdmReg&&existingAdmReg.status==="Approved" ? existingAdmReg : null;
+    const inAdm  = approvedAdmReg&&approvedAdmReg.newIn  ? `<span style="color:var(--green);font-weight:600">${approvedAdmReg.newIn}</span>`  : (r.inTime||'—');
+    const outAdm = approvedAdmReg&&approvedAdmReg.newOut ? `<span style="color:var(--green);font-weight:600">${approvedAdmReg.newOut}</span>` : (r.outTime||'—');
+    let admActionCell = "";
+    if(approvedAdmReg){
+      admActionCell = `<span style="font-size:11px;color:var(--green)">✔ Regularized</span>&nbsp;<button class="btn" style="padding:1px 7px;font-size:10px;color:var(--text2);border-color:var(--border2)" onclick="openAdminRegModal('${r.date}',${rowEmpObj.id})" title="Correct this regularization">Re-regularize</button>`;
+    } else if(rowEmpObj){
+      const pending = existingAdmReg&&existingAdmReg.status==="Pending";
+      admActionCell = pending
+        ? `<span class="reg-badge-pending">Pending</span>`
+        : `<button class="btn" style="padding:2px 8px;font-size:11px;color:var(--accent);border-color:var(--accent)" onclick="openAdminRegModal('${r.date}',${rowEmpObj.id})">Regularize</button>`;
+    }
+
+    // Flag pills
+    const flagPills = r.flags.map(f=>{
+      const fc = f==='Late In'?'#A06600':f==='Early Out'?'#7A2D9A':'#2065A8';
+      const fb = f==='Late In'?'var(--amber-soft)':f==='Early Out'?'#FEF0FF':'var(--blue-soft)';
+      return `<span style="font-size:10px;font-weight:600;padding:2px 7px;border-radius:99px;background:${fb};color:${fc};margin-left:4px">${f}</span>`;
+    }).join('');
+
+    return `<tr${approvedAdmReg?' style="background:rgba(76,175,125,.05)"':''}>
+      <td style="font-weight:600;color:var(--text)">${r.name}</td>
+      <td>${fmtD(r.date)}</td>
+      <td style="color:var(--text2)">${r.day}</td>
+      <td><span class="badge ${shiftBadge}">${shiftDisplay}</span></td>
+      <td style="font-size:11px;color:var(--text2);font-weight:500">${_ns&&SHIFTS[_ns]?SHIFTS[_ns].start+'–'+SHIFTS[_ns].end:'—'}</td>
+      <td>${inAdm}</td>
+      <td>${outAdm}</td>
+      <td style="font-weight:600;color:${r.hoursM!==null?(r.hoursM>=540?'var(--green)':'var(--amber)'):'var(--text3)'}">${minsToHHMM(r.hoursM)}</td>
+      <td><span class="badge ${statusColor}">${r.status}</span>${r.halfPL?'<span style="font-size:9px;background:var(--purple-soft);color:var(--purple);padding:1px 5px;border-radius:99px;margin-left:3px">½PL</span>':''}${flagPills}</td>
+      <td>${admActionCell}</td>
+    </tr>`;
+  }).join('');
+}
+
+function exportAttExcel(){
+  if(!attData.length){showAlert('No attendance data to export','e');return;}
+  if(typeof XLSX==='undefined'){showAlert('Excel library not loaded','e');return;}
+  const empF    = document.getElementById('att-filter-emp')?.value||'';
+  const dateF   = document.getElementById('att-filter-date')?.value||'';
+  const monthF  = document.getElementById('att-filter-month')?.value||'';
+  const statF   = document.getElementById('att-filter-status')?.value||'';
+  const branchF3 = document.getElementById('att-filter-branch')?.value||'';
+  let rows = attData;
+  if(branchF3) rows=rows.filter(r=>getEmpBranch(r.name)===branchF3);
+  if(monthF)  rows=rows.filter(r=>r.date&&r.date.startsWith(monthF));
+  if(empF)    rows=rows.filter(r=>r.name===empF);
+  if(dateF)   rows=rows.filter(r=>r.date===dateF);
+  const classified=rows.map(r=>({...r,...classifyRow(r)}));
+  const filtered=statF?classified.filter(r=>r.status===statF||r.flags.includes(statF)):classified;
+
+  const wb=XLSX.utils.book_new();
+  const wsData=filtered.map(r=>{
+    const sh=SHIFTS[r.shift]||SHIFTS['1st'];
+    return{
+      'Employee':r.name,'Date':r.date,'Day':r.day,
+      'Shift':sh.label,'Shift Time':sh.start+'–'+sh.end,
+      'In':r.inTime||'','Out':r.outTime||'',
+      'Hours Worked':r.hoursM!==null?minsToHHMM(r.hoursM):'',
+      'Status':r.status,'Flags':r.flags.join(', ')
+    };
+  });
+  const ws=XLSX.utils.json_to_sheet(wsData);
+  ws['!cols']=[{wch:20},{wch:12},{wch:12},{wch:12},{wch:12},{wch:8},{wch:8},{wch:14},{wch:14},{wch:22}];
+  XLSX.utils.book_append_sheet(wb,ws,'Attendance Report');
+  XLSX.writeFile(wb,`Sushobhit_Attendance_${new Date().toISOString().split('T')[0]}.xlsx`);
+  showAlert('Attendance report exported','s');
+}
+
+function downloadAttTemplate(){
+  if(typeof XLSX==='undefined'){showAlert('Excel library not loaded','e');return;}
+  const wb=XLSX.utils.book_new();
+  // Template matching the simple format: Name:- header + Date/Day/Shift/In/Out rows
+  const aoa=[
+    ['','','Name:-','VRUSHALI',''],
+    ['Date','Day','Shift','In','Out'],
+    ['01/06/2026','Monday','Mid','11:46','20:54'],
+    ['02/06/2026','Tuesday','WeekOff','',''],
+    ['03/06/2026','Wednesday','1st','11:41','21:27'],
+    ['04/06/2026','Thursday','Mid','11:37','21:10'],
+    ['05/06/2026','Friday','2nd','21:52',''],
+    ['06/06/2026','Saturday','Mid','11:45',''],
+    ['07/06/2026','Sunday','1st','10:53',''],
+    ['08/06/2026','Monday','PL','',''],
+    ['09/06/2026','Tuesday','LOP','',''],
+    [''],
+    ['','','Name:-','MANISHA',''],
+    ['Date','Day','Shift','In','Out'],
+    ['01/06/2026','Monday','WeekOff','',''],
+    ['02/06/2026','Tuesday','2nd','12:58','21:51'],
+    ['03/06/2026','Wednesday','1st','10:09','19:13'],
+  ];
+  const ws=XLSX.utils.aoa_to_sheet(aoa);
+  ws['!cols']=[{wch:12},{wch:12},{wch:10},{wch:8},{wch:8}];
+  XLSX.utils.book_append_sheet(wb,ws,'Attendance');
+  XLSX.writeFile(wb,'Sushobhit_Attendance_Template.xlsx');
+  showAlert('Template downloaded','s');
+}
+
+loadData();
+</script>
+
+<!-- REGULARIZATION MODAL -->
+<div id="reg-modal" style="display:none" class="modal-overlay" onclick="if(event.target===this)closeRegModal()">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title">🕐 Regularize Attendance<span id="reg-modal-title-extra" style="font-weight:400;color:var(--text2)"></span></div>
+      <button class="modal-close" onclick="closeRegModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="background:var(--bg);border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:13px">
+        <div style="display:flex;gap:16px;flex-wrap:wrap">
+          <div><span style="color:var(--text2);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em">Date</span><div id="reg-modal-date" style="font-weight:600;margin-top:2px"></div></div>
+          <div><span style="color:var(--text2);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em">Shift</span><div id="reg-modal-shift" style="font-weight:600;margin-top:2px"></div></div>
+          <div><span style="color:var(--text2);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em">Current Status</span><div id="reg-modal-cur-status" style="font-weight:600;margin-top:2px;color:var(--text2)"></div></div>
+          <div><span style="color:var(--text2);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em">Recorded In</span><div id="reg-modal-in" style="font-weight:600;margin-top:2px;color:var(--text2)"></div></div>
+          <div><span style="color:var(--text2);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em">Recorded Out</span><div id="reg-modal-out" style="font-weight:600;margin-top:2px;color:var(--text2)"></div></div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <!-- Admin-only: Mark As status override -->
+        <div class="form-field" id="reg-modal-status-row" style="display:none">
+          <label>Mark day as <span style="color:var(--text3);font-weight:400;font-size:11px">(override status)</span></label>
+          <select id="reg-modal-new-status" onchange="onRegModalStatusChange()" style="padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;background:var(--surface);font-size:13px;color:var(--text);outline:none;width:100%">
+            <option value="">— Keep current (correct punch times only) —</option>
+            <option value="Present">Present</option>
+            <option value="Half Day">Half Day (0.5 PL deducted)</option>
+            <option value="MRM">MRM (treated as Present)</option>
+            <option value="PL (Paid Leave)">PL — Full Paid Leave (1 PL deducted)</option>
+            <option value="LOP (Loss of Pay)">LOP — Loss of Pay</option>
+            <option value="Week Off">Week Off</option>
+          </select>
+        </div>
+        <!-- Punch time corrections — hidden when a non-punch status is chosen -->
+        <div id="reg-modal-times-section">
+          <div class="form-field" style="margin-bottom:12px">
+            <label>Correct In time <span style="color:var(--text3);font-weight:400;font-size:11px">(leave blank if unchanged)</span></label>
+            <input type="time" id="reg-modal-new-in" style="padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;background:var(--surface);font-size:13px;color:var(--text);outline:none;width:100%">
+          </div>
+          <div class="form-field">
+            <label>Correct Out time <span style="color:var(--text3);font-weight:400;font-size:11px">(leave blank if unchanged)</span></label>
+            <input type="time" id="reg-modal-new-out" style="padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;background:var(--surface);font-size:13px;color:var(--text);outline:none;width:100%">
+          </div>
+        </div>
+        <div class="form-field">
+          <label id="reg-modal-reason-label">Reason <span style="color:var(--red);font-size:11px">*</span></label>
+          <input type="text" id="reg-modal-reason" placeholder="e.g. Forgot to punch out, biometric error…" style="padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;background:var(--surface);font-size:13px;color:var(--text);outline:none;width:100%">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeRegModal()">Cancel</button>
+      <button class="btn btn-accent" id="reg-modal-submit-btn" onclick="submitRegularization()">Submit Request</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
