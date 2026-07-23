@@ -379,26 +379,28 @@ tbody tr:hover{background:#FFFAF7}
     text-transform:uppercase;letter-spacing:.04em;
     white-space:nowrap;flex-shrink:0;margin-right:8px;
   }
-  /* Employee leave history labels (7 cols: From, To, Days, Month, Note, By, Status) */
+  /* Employee leave history labels (8 cols: From, To, Days, Type, Month, Note, By, Status) */
   #emp-hist-tbl tbody td:nth-child(1)::before{content:"From"}
   #emp-hist-tbl tbody td:nth-child(2)::before{content:"To"}
   #emp-hist-tbl tbody td:nth-child(3)::before{content:"Days"}
-  #emp-hist-tbl tbody td:nth-child(4){display:none}
-  #emp-hist-tbl tbody td:nth-child(5)::before{content:"Note"}
-  #emp-hist-tbl tbody td:nth-child(6)::before{content:"By"}
-  #emp-hist-tbl tbody td:nth-child(7){padding-top:6px;margin-top:4px;border-top:1px solid var(--border);justify-content:flex-end}
-  #emp-hist-tbl tbody td:nth-child(7)::before{content:""}
+  #emp-hist-tbl tbody td:nth-child(4)::before{content:"Type"}
+  #emp-hist-tbl tbody td:nth-child(5){display:none}
+  #emp-hist-tbl tbody td:nth-child(6)::before{content:"Note"}
+  #emp-hist-tbl tbody td:nth-child(7)::before{content:"By"}
+  #emp-hist-tbl tbody td:nth-child(8){padding-top:6px;margin-top:4px;border-top:1px solid var(--border);justify-content:flex-end}
+  #emp-hist-tbl tbody td:nth-child(8)::before{content:""}
 
-  /* Admin employee profile leave history labels (8 cols: From, To, Days, Month, Note, By, Applied on, Status) */
+  /* Admin employee profile leave history labels (9 cols: From, To, Days, Type, Month, Note, By, Applied on, Status) */
   #ep-hist-tbl tbody td:nth-child(1)::before{content:"From"}
   #ep-hist-tbl tbody td:nth-child(2)::before{content:"To"}
   #ep-hist-tbl tbody td:nth-child(3)::before{content:"Days"}
-  #ep-hist-tbl tbody td:nth-child(4){display:none}
-  #ep-hist-tbl tbody td:nth-child(5)::before{content:"Note"}
-  #ep-hist-tbl tbody td:nth-child(6)::before{content:"By"}
-  #ep-hist-tbl tbody td:nth-child(7){display:none}
-  #ep-hist-tbl tbody td:nth-child(8){padding-top:6px;margin-top:4px;border-top:1px solid var(--border);justify-content:flex-end}
-  #ep-hist-tbl tbody td:nth-child(8)::before{content:""}
+  #ep-hist-tbl tbody td:nth-child(4)::before{content:"Type"}
+  #ep-hist-tbl tbody td:nth-child(5){display:none}
+  #ep-hist-tbl tbody td:nth-child(6)::before{content:"Note"}
+  #ep-hist-tbl tbody td:nth-child(7)::before{content:"By"}
+  #ep-hist-tbl tbody td:nth-child(8){display:none}
+  #ep-hist-tbl tbody td:nth-child(9){padding-top:6px;margin-top:4px;border-top:1px solid var(--border);justify-content:flex-end}
+  #ep-hist-tbl tbody td:nth-child(9)::before{content:""}
 
   /* ── Attendance tables → card layout ── */
   #att-tbl thead, #myatt-tbl thead { display:none }
@@ -1108,9 +1110,10 @@ tbody tr:hover{background:#FFFAF7}
         </div>
         <div style="overflow-x:auto"><table id="ep-hist-tbl">
           <thead><tr>
-            <th style="width:14%">From</th><th style="width:14%">To</th><th style="width:7%">Days</th>
-            <th style="width:13%">Month</th><th style="width:20%">Note</th><th style="width:9%">By</th>
-            <th style="width:11%">Applied on</th><th style="width:12%">Status</th>
+            <th style="width:12%">From</th><th style="width:12%">To</th><th style="width:6%">Days</th>
+            <th style="width:8%">Type</th>
+            <th style="width:12%">Month</th><th style="width:18%">Note</th><th style="width:8%">By</th>
+            <th style="width:10%">Applied on</th><th style="width:11%">Status</th>
           </tr></thead>
           <tbody id="ep-hist"></tbody>
         </table></div>
@@ -1171,8 +1174,9 @@ tbody tr:hover{background:#FFFAF7}
         <div class="card">
           <div class="card-header"><div class="card-title">Leave history</div></div>
           <div style="overflow-x:auto"><table id="emp-hist-tbl"><thead><tr>
-            <th style="width:18%">From</th><th style="width:18%">To</th><th style="width:8%">Days</th>
-            <th style="width:14%">Month</th><th style="width:18%">Note</th><th style="width:9%">By</th><th style="width:15%">Status</th>
+            <th style="width:15%">From</th><th style="width:15%">To</th><th style="width:7%">Days</th>
+            <th style="width:9%">Type</th>
+            <th style="width:12%">Month</th><th style="width:16%">Note</th><th style="width:8%">By</th><th style="width:14%">Status</th>
           </tr></thead><tbody id="emp-hist"></tbody></table></div>
         </div>
       </div>
@@ -1596,8 +1600,11 @@ function renderEmpProfile(emp){
   const byMonth={};
   empLeaves.forEach(l=>{
     const m=l.month||monthOf(l.from);
-    if(!byMonth[m])byMonth[m]={approved:0,pending:0,rejected:0,notes:[]};
-    if(l.status==="Approved")byMonth[m].approved+=l.days;
+    if(!byMonth[m])byMonth[m]={approvedPL:0,approvedLOP:0,pending:0,rejected:0,notes:[]};
+    if(l.status==="Approved"){
+      if(l.isLOP) byMonth[m].approvedLOP+=l.days;
+      else byMonth[m].approvedPL+=l.days;
+    }
     else if(l.status==="Pending")byMonth[m].pending+=l.days;
     else byMonth[m].rejected+=l.days;
     if(l.note)byMonth[m].notes.push(l.note);
@@ -1606,10 +1613,11 @@ function renderEmpProfile(emp){
   document.getElementById("ep-monthly").innerHTML=months.length?months.map(m=>{
     const d=byMonth[m];
     const parts=[];
-    if(d.approved)parts.push(`<span class="badge bg-green">${d.approved}d approved</span>`);
+    if(d.approvedPL)parts.push(`<span class="badge bg-green">${d.approvedPL}d PL</span>`);
+    if(d.approvedLOP)parts.push(`<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;background:var(--red-soft);color:#8B2500">${d.approvedLOP}d LOP</span>`);
     if(d.pending)parts.push(`<span class="badge bg-amber">${d.pending}d pending</span>`);
     if(d.rejected)parts.push(`<span class="badge bg-red">${d.rejected}d rejected</span>`);
-    return`<tr><td style="font-weight:500">${fmtM(m)}</td><td>${d.approved+d.pending}</td><td>${parts.join(" ")}</td><td style="font-size:12px;color:var(--color-text-secondary)">${d.notes.slice(0,2).join(", ")||"—"}</td></tr>`;
+    return`<tr><td style="font-weight:500">${fmtM(m)}</td><td>${d.approvedPL+d.pending}</td><td>${parts.join(" ")}</td><td style="font-size:12px;color:var(--color-text-secondary)">${d.notes.slice(0,2).join(", ")||"—"}</td></tr>`;
   }).join(""):`<tr><td colspan="4"><div class="empty-state"><p>No leave records yet</p></div></td></tr>`;
 
   renderEpHistory();
@@ -1625,15 +1633,19 @@ function renderEpHistory(){
   document.getElementById("ep-hist").innerHTML=leaves.length?leaves.map(l=>{
     const cls=l.status==="Approved"?"bg-green":l.status==="Rejected"?"bg-red":"bg-amber";
     const src=l.source==="admin"?`<span class="chip-admin">Admin</span>`:`<span class="chip-emp">Emp</span>`;
+    const typeTag=l.isLOP
+      ? `<span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:99px;background:var(--red-soft);color:#8B2500">LOP</span>`
+      : `<span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:99px;background:var(--green-soft);color:#0E6E56">PL</span>`;
     return`<tr>
       <td>${fmtD(l.from)}</td><td>${fmtD(l.to)}</td><td>${l.days}</td>
+      <td>${typeTag}</td>
       <td style="font-size:12px">${fmtM(l.month||monthOf(l.from))}</td>
       <td style="font-size:12px;color:var(--color-text-secondary)">${l.note||"—"}</td>
       <td>${src}</td>
       <td style="font-size:12px;color:var(--color-text-secondary)">${l.appliedOn||"—"}</td>
       <td><span class="badge ${cls}">${l.status}</span></td>
     </tr>`;
-  }).join(""):`<tr><td colspan="8"><div class="empty-state"><p>No leave history found</p></div></td></tr>`;
+  }).join(""):`<tr><td colspan="9"><div class="empty-state"><p>No leave history found</p></div></td></tr>`;
 }
 
 function updateRegBadge(){
@@ -2935,8 +2947,11 @@ function renderEmpHist(emp){
   document.getElementById("emp-hist").innerHTML=leaves.map(l=>{
     const cls=l.status==="Approved"?"bg-green":l.status==="Rejected"?"bg-red":"bg-amber";
     const src=l.source==="admin"?`<span class="chip-admin">Admin</span>`:`<span class="chip-emp">You</span>`;
-    return`<tr><td>${fmtD(l.from)}</td><td>${fmtD(l.to)}</td><td>${l.days}</td><td style="font-size:12px">${fmtM(l.month||monthOf(l.from))}</td><td style="font-size:12px;color:var(--color-text-secondary)">${l.note||"—"}</td><td>${src}</td><td><span class="badge ${cls}">${l.status}</span></td></tr>`;
-  }).join("")||`<tr><td colspan="7"><div class="empty-state"><p>No leave history yet</p></div></td></tr>`;
+    const typeTag=l.isLOP
+      ? `<span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:99px;background:var(--red-soft);color:#8B2500">LOP</span>`
+      : `<span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:99px;background:var(--green-soft);color:#0E6E56">PL</span>`;
+    return`<tr><td>${fmtD(l.from)}</td><td>${fmtD(l.to)}</td><td>${l.days}</td><td>${typeTag}</td><td style="font-size:12px">${fmtM(l.month||monthOf(l.from))}</td><td style="font-size:12px;color:var(--color-text-secondary)">${l.note||"—"}</td><td>${src}</td><td><span class="badge ${cls}">${l.status}</span></td></tr>`;
+  }).join("")||`<tr><td colspan="8"><div class="empty-state"><p>No leave history yet</p></div></td></tr>`;
 }
 function updatePreview(){
   const from=document.getElementById("el-from").value,to=document.getElementById("el-to").value;
