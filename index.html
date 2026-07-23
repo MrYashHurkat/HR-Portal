@@ -1332,7 +1332,7 @@ async function loadData() {
     if (attendanceRes.error) throw attendanceRes.error;
 
     const employees    = (employeesRes.data    || []).map(e=>({...e, plStart:e.pl_start}));
-    const leaves       = (leavesRes.data       || []).map(l=>({...l, empId:l.emp_id, from:l.from_date, to:l.to_date, halfDay:l.half_day, appliedOn:l.applied_on, isLOP:l.is_lop}));
+    const leaves       = (leavesRes.data       || []).map(l=>({...l, empId:l.emp_id, from:l.from_date, to:l.to_date, halfDay:l.half_day, appliedOn:l.applied_on, isLOP:l.is_lop, regId:l.reg_id}));
     const regularizations = (regsRes.data     || []).map(r=>({...r, empId:r.emp_id, decidedOn:r.decided_on, appliedOn:r.applied_on, newIn:r.new_in, newOut:r.new_out, newStatus:r.new_status, newShift:r.new_shift, empName:r.emp_name, wasIn:r.was_in, wasOut:r.was_out}));
     // Restore attData from Supabase attendance rows
     const empById = Object.fromEntries((employeesRes.data||[]).map(e=>[e.id, e.name]));
@@ -1379,7 +1379,7 @@ function toDbEmployee(e){
   return {id:e.id,name:e.name,branch:e.branch,desig:e.desig,pl_start:e.plStart||e.pl_start||null,cf:e.cf,employee_code:e.employee_code,auth_email:e.auth_email,auth_uid:e.auth_uid,is_admin:e.is_admin};
 }
 function toDbLeave(l){
-  return {id:l.id,emp_id:l.empId||l.emp_id,from_date:l.from||l.from_date,to_date:l.to||l.to_date,days:l.days,month:l.month,note:l.note,applied_on:l.appliedOn||l.applied_on||null,status:l.status,source:l.source,half_day:l.halfDay||l.half_day||false,is_lop:l.isLOP||l.is_lop||false};
+  return {id:l.id,emp_id:l.empId||l.emp_id,from_date:l.from||l.from_date,to_date:l.to||l.to_date,days:l.days,month:l.month,note:l.note,applied_on:l.appliedOn||l.applied_on||null,status:l.status,source:l.source,half_day:l.halfDay||l.half_day||false,is_lop:l.isLOP||l.is_lop||false,reg_id:l.regId||l.reg_id||null};
 }
 function toDbReg(r){
   return {id:r.id,emp_id:r.empId||r.emp_id,date:r.date,new_in:r.newIn||r.new_in||null,new_out:r.newOut||r.new_out||null,new_status:r.newStatus||r.new_status||null,new_shift:r.newShift||r.new_shift||null,shift:r.shift||null,reason:r.reason||null,status:r.status,applied_on:r.appliedOn||r.applied_on||null,decided_on:r.decidedOn||r.decided_on||null,emp_name:r.empName||r.emp_name||null,was_in:r.wasIn||r.was_in||null,was_out:r.wasOut||r.was_out||null};
@@ -2631,48 +2631,22 @@ function _applyRegPatch(regId, emp, dateStr){
   const month = dateStr.slice(0,7);
   const newSt = reg.newStatus;
 
-  // ── Reverse any prior auto-deducted PL for this employee+date ──────────────
-  // Sources that auto-create PL records: attendance upload (halfPL), prior regularization.
-  // When the admin regularizes to a status that is NOT "Half Day" or "PL (Paid Leave)",
-  // those deductions are no longer valid and must be removed so PL is restored.
+  // ── Reverse any prior auto-deducted leave (PL or LOP) for this employee+date ─
+  // Sources that auto-create these records: attendance upload (full/half PL,
+  // or LOP when balance was insufficient) and a prior regularization. Once a
+  // new regularization is approved for this date, none of those old records
+  // are valid anymore — regardless of whether they were PL or LOP — so they
+  // must ALL be removed. Fresh records (if the new status still needs one)
+  // are created below based on the new status.
   const autoSources = ["attendance","attendance-half","regularization"];
-  const priorPLLeaves = S.leaves.filter(l =>
+  const priorAutoLeaves = S.leaves.filter(l =>
     l.empId === emp.id &&
     l.from  === dateStr &&
-    autoSources.includes(l.source) &&
-    !l.isLOP   // only remove PL portion, not LOP records (LOP has no PL impact)
+    autoSources.includes(l.source)
   );
-
-  // Determine what the row was classified as BEFORE this patch (original halfPL flag)
-  // We reverse PL if the old auto-deductions exist AND the new status is not PL/HalfDay
-  const newStatusNeedsPL = newSt === "Half Day" || newSt === "PL (Paid Leave)";
-
-  if(priorPLLeaves.length > 0){
-    if(!newStatusNeedsPL){
-      // Remove old PL deductions — PL is fully restored
-      const priorIds = new Set(priorPLLeaves.map(l=>l.id));
-      S.leaves = S.leaves.filter(l => !priorIds.has(l.id));
-      // Also remove any LOP records created alongside those PL records (same regId or same date/source)
-      S.leaves = S.leaves.filter(l => {
-        if(l.empId !== emp.id || l.from !== dateStr) return true;
-        if(!autoSources.includes(l.source)) return true;
-        // Remove LOP that was paired with the now-reversed PL
-        if(l.isLOP && (priorPLLeaves.some(p => p.source === l.source && (!p.regId || p.regId === l.regId)))) return false;
-        return true;
-      });
-    }
-    // If newStatusNeedsPL — we'll create fresh records below, but first remove old ones to avoid duplicates
-    else {
-      const priorIds = new Set(priorPLLeaves.map(l=>l.id));
-      S.leaves = S.leaves.filter(l => !priorIds.has(l.id));
-      // Remove paired LOP too
-      S.leaves = S.leaves.filter(l => {
-        if(l.empId !== emp.id || l.from !== dateStr) return true;
-        if(!autoSources.includes(l.source)) return true;
-        if(l.isLOP && priorPLLeaves.some(p => p.source === l.source && (!p.regId || p.regId === l.regId))) return false;
-        return true;
-      });
-    }
+  if(priorAutoLeaves.length > 0){
+    const priorIds = new Set(priorAutoLeaves.map(l=>l.id));
+    S.leaves = S.leaves.filter(l => !priorIds.has(l.id));
   }
 
   // ── Check if a leave record for this reg already exists (idempotency guard) ─
