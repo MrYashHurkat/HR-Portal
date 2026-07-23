@@ -2437,7 +2437,7 @@ function _populateRegModal(row, emp, existingReg){
   // Show current classified status
   const cl = classifyRow(row);
   const curStatusEl = document.getElementById("reg-modal-cur-status");
-  if(curStatusEl) curStatusEl.textContent = cl.status + (cl.halfPL ? " (½PL)" : "");
+  if(curStatusEl) curStatusEl.textContent = cl.status + (cl.halfPL ? " (½PL)" : cl.halfLOP ? " (½LOP)" : "");
 
   document.getElementById("reg-modal-date").textContent  = row.date;
   document.getElementById("reg-modal-shift").textContent = row.shift||"—";
@@ -2509,6 +2509,7 @@ function submitRegularization(){
   const statusToShift = {
     "Present"           : regModalRow.shift || "1st",
     "Half Day"          : "Half",
+    "Half Day LOP"      : "Half",
     "MRM"               : "MRM",
     "PL (Paid Leave)"   : "PL",
     "LOP (Loss of Pay)" : "LOP",
@@ -2690,6 +2691,9 @@ function _applyRegPatch(regId, emp, dateStr){
     } else {
       S.leaves.push({id:S.nextLeaveId++,empId:emp.id,from:dateStr,to:dateStr,days,month,note:"LOP — no PL balance (half day regularization)",appliedOn:today,status:"Approved",source:"regularization",regId,isLOP:true});
     }
+  } else if(newSt === "Half Day LOP"){
+    const days = 0.5;
+    S.leaves.push({id:S.nextLeaveId++,empId:emp.id,from:dateStr,to:dateStr,days,month,note:"Half day via regularization (LOP)",appliedOn:today,status:"Approved",source:"regularization",regId,halfDay:true,isLOP:true});
   } else if(newSt === "PL (Paid Leave)"){
     const days = 1;
     const bal  = balance(emp);
@@ -3074,16 +3078,18 @@ function classifyRow(row){
         const outM2 = toMins(r.outTime);
         let hoursM2 = null;
         if(inM2!==null && outM2!==null){ hoursM2=outM2-inM2; if(hoursM2<0) hoursM2+=1440; }
-        const isHalfSt  = st==="Half Day";
+        const isHalfLOPSt = st==="Half Day LOP";
+        const isHalfSt  = st==="Half Day" || isHalfLOPSt;
         const isPLSt    = st==="PL (Paid Leave)";
         const isLOPSt   = st==="LOP (Loss of Pay)";
         const isWOSt    = st==="Week Off";
         const isMRMSt   = st==="MRM";
         return {
-          status  : isMRMSt ? "Present" : st,
+          status  : isMRMSt ? "Present" : (isHalfLOPSt ? "Half Day" : st),
           hoursM  : hoursM2,
           flags   : isMRMSt ? ["MRM"] : [],
-          halfPL  : isHalfSt,
+          halfPL  : isHalfSt && !isHalfLOPSt,
+          halfLOP : isHalfLOPSt,
           _regularized : true,
           _regReason   : patch.reason,
         };
@@ -3607,6 +3613,18 @@ function renderAttTable(){
       return `<span style="font-size:10px;font-weight:600;padding:2px 7px;border-radius:99px;background:${fb};color:${fc};margin-left:4px">${f}</span>`;
     }).join('');
 
+    // Half Day PL/LOP tag — derive from actual leave records so it's always accurate
+    let halfTag = "";
+    if(r.status==="Half Day" && rowEmpObj){
+      const autoSrcA = new Set(["attendance","attendance-half","regularization"]);
+      const leavesA  = S.leaves.filter(l=>l.empId===rowEmpObj.id&&l.from===r.date&&autoSrcA.has(l.source));
+      const plA  = leavesA.filter(l=>!l.isLOP).reduce((s,l)=>s+l.days,0);
+      const lopA = leavesA.filter(l=> l.isLOP).reduce((s,l)=>s+l.days,0);
+      if(plA>0)  halfTag += '<span style="font-size:9px;background:var(--purple-soft);color:var(--purple);padding:1px 5px;border-radius:99px;margin-left:3px">½PL</span>';
+      if(lopA>0) halfTag += '<span style="font-size:9px;background:var(--red-soft);color:#8B2500;padding:1px 5px;border-radius:99px;margin-left:3px">½LOP</span>';
+      if(!halfTag && r.halfPL) halfTag = '<span style="font-size:9px;background:var(--purple-soft);color:var(--purple);padding:1px 5px;border-radius:99px;margin-left:3px">½PL</span>';
+    }
+
     return `<tr${approvedAdmReg?' style="background:rgba(76,175,125,.05)"':''}>
       <td style="font-weight:600;color:var(--text)">${r.name}</td>
       <td>${fmtD(r.date)}</td>
@@ -3616,7 +3634,7 @@ function renderAttTable(){
       <td>${inAdm}</td>
       <td>${outAdm}</td>
       <td style="font-weight:600;color:${r.hoursM!==null?(r.hoursM>=540?'var(--green)':'var(--amber)'):'var(--text3)'}">${minsToHHMM(r.hoursM)}</td>
-      <td><span class="badge ${statusColor}">${r.status}</span>${r.halfPL?'<span style="font-size:9px;background:var(--purple-soft);color:var(--purple);padding:1px 5px;border-radius:99px;margin-left:3px">½PL</span>':''}${flagPills}</td>
+      <td><span class="badge ${statusColor}">${r.status}</span>${halfTag}${flagPills}</td>
       <td>${admActionCell}</td>
     </tr>`;
   }).join('');
@@ -3714,6 +3732,7 @@ loadData();
             <option value="">— Keep current (correct punch times only) —</option>
             <option value="Present">Present</option>
             <option value="Half Day">Half Day (0.5 PL deducted)</option>
+            <option value="Half Day LOP">Half Day (0.5 LOP deducted)</option>
             <option value="MRM">MRM (treated as Present)</option>
             <option value="PL (Paid Leave)">PL — Full Paid Leave (1 PL deducted)</option>
             <option value="LOP (Loss of Pay)">LOP — Loss of Pay</option>
