@@ -1300,7 +1300,7 @@ let saveTimer=null;
 function initials(n){return n.trim().split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase()}
 function plMonths(e){if(!e.plStart)return 0;const[sy,sm]=e.plStart.split("-").map(Number);return Math.max(0,(CY-sy)*12+(CM-(sm-1)))}
 function totalCredited(e){return plMonths(e)*2}
-function usedApproved(eid){return S.leaves.filter(l=>l.empId===eid&&l.status==="Approved").reduce((s,l)=>s+l.days,0)}
+function usedApproved(eid){return S.leaves.filter(l=>l.empId===eid&&l.status==="Approved"&&!l.isLOP).reduce((s,l)=>s+l.days,0)}
 function balance(e){return Math.max(0,(e.cf||0)+totalCredited(e)-usedApproved(e.id))}
 function pendingDays(eid){return S.leaves.filter(l=>l.empId===eid&&l.status==="Pending").reduce((s,l)=>s+l.days,0)}
 function availBal(e){return Math.max(0,balance(e)-pendingDays(e.id))}
