@@ -2333,6 +2333,12 @@ function approveReg(id){
   reg.status    = "Approved";
   reg.decidedOn = now.toISOString().split("T")[0];
 
+  // Employee self-submitted requests never set a status override (the "Mark as"
+  // dropdown is admin-only), so reg.newStatus is always null at this point.
+  // Now that admin has approved, the day should read as Present — punch times
+  // stay whatever was recorded/entered (only overwritten if newIn/newOut set).
+  if(!reg.newStatus) reg.newStatus = "Present";
+
   const emp = S.employees.find(e=>e.id===reg.empId);
   if(emp) _applyRegPatch(id, emp, reg.date);
 
