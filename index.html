@@ -1546,6 +1546,7 @@ function aTab(t){
     if(attData.length){
       document.getElementById("att-clear-btn").style.display="";
       document.getElementById("att-results").style.display="";
+      populateAttFilters();
       renderAttTable();
     }
     populateOvMonthFilter();
