@@ -1314,35 +1314,49 @@ function fmtD(s){if(!s)return"—";const d=new Date(s);return`${d.getDate()} ${M
 function fmtM(s){if(!s)return"—";const[y,m]=s.split("-");return`${MN[parseInt(m)-1]} ${y}`}
 function monthOf(s){const d=new Date(s);return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`}
 
+// Fetches ALL rows from a table, paging past Supabase/PostgREST's default 1000-row cap.
+async function fetchAllRows(table, orderCol){
+  const pageSize = 1000;
+  let from = 0;
+  let all = [];
+  while(true){
+    const { data, error } = await supabaseClient
+      .from(table)
+      .select("*")
+      .order(orderCol)
+      .range(from, from + pageSize - 1);
+    if (error) throw error;
+    all = all.concat(data || []);
+    if (!data || data.length < pageSize) break;
+    from += pageSize;
+  }
+  return all;
+}
+
 async function loadData() {
   try {
     updateStorageStatus("● Loading...");
 
     const [
-      employeesRes,
-      leavesRes,
-      regsRes,
-      attendanceRes
+      employeesData,
+      leavesData,
+      regsData,
+      attendanceData
     ] = await Promise.all([
-      supabaseClient.from("employees").select("*").order("id"),
-      supabaseClient.from("leaves").select("*").order("id"),
-      supabaseClient.from("regularizations").select("*").order("id"),
-      supabaseClient.from("attendance").select("*").order("date")
+      fetchAllRows("employees", "id"),
+      fetchAllRows("leaves", "id"),
+      fetchAllRows("regularizations", "id"),
+      fetchAllRows("attendance", "date")
     ]);
 
-    if (employeesRes.error) throw employeesRes.error;
-    if (leavesRes.error) throw leavesRes.error;
-    if (regsRes.error) throw regsRes.error;
-    if (attendanceRes.error) throw attendanceRes.error;
-
-    const employees    = (employeesRes.data    || []).map(e=>({...e, plStart:e.pl_start}));
-    const leaves       = (leavesRes.data       || []).map(l=>({...l, empId:l.emp_id, from:l.from_date, to:l.to_date, halfDay:l.half_day, appliedOn:l.applied_on, isLOP:l.is_lop, regId:l.reg_id}));
-    const regularizations = (regsRes.data     || []).map(r=>({...r, empId:r.emp_id, decidedOn:r.decided_on, appliedOn:r.applied_on, newIn:r.new_in, newOut:r.new_out, newStatus:r.new_status, newShift:r.new_shift, empName:r.emp_name, wasIn:r.was_in, wasOut:r.was_out}));
+    const employees    = (employeesData    || []).map(e=>({...e, plStart:e.pl_start}));
+    const leaves       = (leavesData       || []).map(l=>({...l, empId:l.emp_id, from:l.from_date, to:l.to_date, halfDay:l.half_day, appliedOn:l.applied_on, isLOP:l.is_lop, regId:l.reg_id}));
+    const regularizations = (regsData     || []).map(r=>({...r, empId:r.emp_id, decidedOn:r.decided_on, appliedOn:r.applied_on, newIn:r.new_in, newOut:r.new_out, newStatus:r.new_status, newShift:r.new_shift, empName:r.emp_name, wasIn:r.was_in, wasOut:r.was_out}));
     // Restore attData from Supabase attendance rows
-    const empById = Object.fromEntries((employeesRes.data||[]).map(e=>[e.id, e.name]));
+    const empById = Object.fromEntries((employeesData||[]).map(e=>[e.id, e.name]));
     const _nonWorkKw = ['weekoff','week off','leave','ign','mrm','holiday','off','pl','lop'];
     const _isNonWork = s => s ? _nonWorkKw.some(k=>s.toLowerCase().includes(k)) : false;
-    attData = (attendanceRes.data || []).map(a=>({
+    attData = (attendanceData || []).map(a=>({
       id: a.id,
       emp_id: a.emp_id,
       name: empById[a.emp_id] || '',
@@ -1546,7 +1560,6 @@ function aTab(t){
     if(attData.length){
       document.getElementById("att-clear-btn").style.display="";
       document.getElementById("att-results").style.display="";
-      populateAttFilters();
       renderAttTable();
     }
     populateOvMonthFilter();
@@ -2333,12 +2346,6 @@ function approveReg(id){
   if(!reg||reg.status!=="Pending") return;
   reg.status    = "Approved";
   reg.decidedOn = now.toISOString().split("T")[0];
-
-  // Employee self-submitted requests never set a status override (the "Mark as"
-  // dropdown is admin-only), so reg.newStatus is always null at this point.
-  // Now that admin has approved, the day should read as Present — punch times
-  // stay whatever was recorded/entered (only overwritten if newIn/newOut set).
-  if(!reg.newStatus) reg.newStatus = "Present";
 
   const emp = S.employees.find(e=>e.id===reg.empId);
   if(emp) _applyRegPatch(id, emp, reg.date);
