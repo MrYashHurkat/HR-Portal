@@ -1420,7 +1420,14 @@ async function saveData() {
     for(const a of attData){
       if(!a.emp_id && a.name) a.emp_id = empByName[a.name.trim().toLowerCase()] || null;
     }
-    const attToSave = attData.filter(a=>a.emp_id && a.date);
+    const seen = new Set();
+    const attToSave = attData.filter(a=>{
+      if(!a.emp_id || !a.date) return false;
+      const key = `${a.emp_id}|${a.date}`;
+      if(seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
     const unmatched = attData.filter(a=>!a.emp_id && a.name).map(a=>a.name);
     if(unmatched.length){
       const unique=[...new Set(unmatched)];
