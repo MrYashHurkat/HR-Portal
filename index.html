@@ -658,6 +658,45 @@ tbody tr:hover{background:#FFFAF7}
   #adm-emp-roster-tbl tbody tr[id^="edit-row"]{display:block;margin-bottom:8px}
   #adm-emp-roster-tbl tbody tr[id^="edit-row"] > td{display:block;width:100%}
 }
+
+/* ── Store tabs / store grouping / store cards ── */
+.store-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.store-tab{padding:7px 16px;border-radius:99px;border:1.5px solid var(--border);background:var(--surface);font-size:12px;font-weight:600;cursor:pointer;color:var(--text2);font-family:inherit}
+.store-tab:hover{border-color:var(--accent);color:var(--accent)}
+.store-tab.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+table tbody tr.store-group-row,table tbody tr.store-group-row:hover{background:var(--bg)!important}
+table tbody tr.store-group-row td{display:table-cell;white-space:normal!important;overflow:visible!important;padding:10px 14px!important;border-bottom:1px solid var(--border)!important;border-top:2px solid var(--border2,var(--border))!important}
+table tbody tr.store-group-row td::before{content:""!important;display:none!important}
+.sg-wrap{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.sg-name{font-size:13px;font-weight:700;color:var(--text)}
+.sg-count{font-size:11px;color:var(--text3)}
+.sg-chips{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto}
+.sg-chip{font-size:11px;font-weight:600;padding:3px 10px;border-radius:99px;white-space:nowrap}
+.ov-section{display:flex;align-items:center;gap:8px;margin:0 0 10px}
+.ov-section-label{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3)}
+.ov-section-line{flex:1;height:1px;background:var(--border)}
+.ov-none{padding:16px 18px;background:var(--surface);border-radius:var(--radius);border:1px dashed var(--border2,var(--border));color:var(--text2);font-size:13px;margin-bottom:1.5rem}
+.store-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px;margin-bottom:1rem}
+.store-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;box-shadow:var(--shadow-sm);display:flex;flex-direction:column}
+.sc-head{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;padding-bottom:10px;margin-bottom:4px;border-bottom:1px solid var(--border)}
+.sc-name{font-size:15px;font-weight:700;color:var(--text)}
+.sc-sub{font-size:11px;color:var(--text3)}
+.sc-pend{margin-left:auto;font-size:10px;font-weight:700;padding:2px 9px;border-radius:99px;background:var(--amber-soft);color:#A06600}
+.sc-stat{padding:8px 0;border-bottom:1px solid var(--border)}
+.sc-stat:last-of-type{border-bottom:none}
+.sc-stat-top{display:flex;justify-content:space-between;align-items:baseline;font-size:12px;color:var(--text2)}
+.sc-stat-top strong{font-size:15px;color:var(--text)}
+.sc-stat-top strong.zero{color:var(--text3);font-weight:500}
+.sc-names{font-size:11px;color:var(--text2);margin-top:3px;line-height:1.6}
+.sc-names span{cursor:pointer;color:#534AB7}
+.sc-names span:hover{text-decoration:underline}
+.sc-note{font-size:11px;color:var(--text3);padding:8px 0}
+.sc-actions{display:flex;gap:6px;margin-top:auto;padding-top:12px}
+@media(max-width:700px){
+  table tbody tr.store-group-row{padding:0!important;border:none!important;box-shadow:none!important;background:transparent!important;margin:14px 0 6px!important}
+  table tbody tr.store-group-row td{display:block!important;border:none!important;padding:4px 2px!important}
+  .sg-chips{margin-left:0}
+}
 </style>
 </head>
 <body>
@@ -755,75 +794,34 @@ tbody tr:hover{background:#FFFAF7}
           <div class="page-sub" id="adm-date"></div>
         </div>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-          <select class="filter-select" id="ov-branch-filter" onchange="renderAdmin()" style="font-size:12px">
-            <option value="">All branches</option>
-            <option>Kalyan</option><option>Dombivali</option><option>Ambernath</option>
-          </select>
           <select class="filter-select" id="ov-month-filter" onchange="renderAdmin()" style="font-size:12px">
             <option value="">Current month</option>
           </select>
         </div>
       </div>
 
-      <!-- ── Section: Leave metrics ── -->
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
-        <div style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3)">Leave</div>
-        <div style="flex:1;height:1px;background:var(--border)"></div>
+      <!-- ── Section: Action needed ── -->
+      <div class="ov-section">
+        <div class="ov-section-label">Action needed</div>
+        <div class="ov-section-line"></div>
       </div>
-      <div class="metrics-grid" id="adm-metrics" style="margin-bottom:1.25rem"></div>
+      <div class="ov-none" id="ov-none" style="display:none">✓ Nothing is waiting for you — no pending leave requests or regularizations.</div>
 
-      <!-- ── Section: Attendance metrics ── -->
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
-        <div style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3)">Attendance</div>
-        <div style="flex:1;height:1px;background:var(--border)"></div>
-        <div id="ov-att-month-label" style="font-size:11px;color:var(--text3)"></div>
-      </div>
-      <div id="adm-att-metrics" class="metrics-grid" style="margin-bottom:1.5rem"></div>
-
-      <!-- ── Attendance flag strips ── -->
-      <div id="ov-att-flags" style="margin-bottom:1.5rem;display:none">
-        <div style="display:flex;gap:8px;flex-wrap:wrap" id="ov-att-flag-chips"></div>
-      </div>
-
-      <!-- ── Attendance breakdown by employee ── -->
-      <div class="card" id="ov-att-breakdown-card" style="display:none;margin-bottom:1rem">
-        <div class="card-header" style="justify-content:space-between">
-          <div class="card-title">📋 Attendance breakdown <span id="ov-att-breakdown-month" style="font-weight:400;color:var(--text2);font-size:12px"></span></div>
-          <button class="btn btn-sm" onclick="aTab('attendance')">View full report →</button>
+      <div class="card" id="ov-pending-card" style="margin-bottom:1rem">
+        <div class="card-header">
+          <div class="card-title">Leave requests to approve</div>
+          <span id="pending-count" class="badge bg-red">0</span>
         </div>
-        <div style="overflow-x:auto">
-          <table id="ov-att-tbl">
-            <thead><tr>
-              <th style="width:22%">Employee</th>
-              <th style="width:11%">Present</th>
-              <th style="width:10%">LOP</th>
-              <th style="width:10%">Week Off</th>
-              <th style="width:10%">PL</th>
-              <th style="width:10%">Half Day</th>
-              <th style="width:12%">Late In</th>
-              <th style="width:15%">Avg Hours</th>
-            </tr></thead>
-            <tbody id="ov-att-breakdown-tbody"></tbody>
-          </table>
-        </div>
+        <table id="adm-pending-tbl"><thead><tr><th style="width:62%">Employee</th><th style="width:12%">Days</th><th style="width:26%">Action</th></tr></thead>
+        <tbody id="adm-pending"></tbody></table>
       </div>
 
-      <!-- ── Regularization requests ── -->
-      <div class="card" id="ov-reg-card" style="margin-bottom:1rem">
+      <div class="card" id="ov-reg-card" style="margin-bottom:1.5rem">
         <div class="card-header" style="justify-content:space-between">
-          <div class="card-title">🔄 Regularization Requests
+          <div class="card-title">🔄 Regularizations to approve
             <span id="ov-reg-pending-chip" style="display:none;background:var(--amber-soft);color:#A06600;font-size:10px;font-weight:600;padding:1px 8px;border-radius:99px;margin-left:6px"></span>
           </div>
-          <div style="display:flex;gap:6px;align-items:center">
-            <select class="filter-select" id="ov-reg-filter-emp" onchange="renderOvRegRequests()" style="font-size:12px"><option value="">All employees</option></select>
-            <select class="filter-select" id="ov-reg-filter-status" onchange="renderOvRegRequests()" style="font-size:12px">
-              <option value="Pending">Pending</option>
-              <option value="">All</option>
-              <option value="Approved">Approved</option>
-              <option value="Rejected">Rejected</option>
-            </select>
-            <button class="btn btn-sm" onclick="aTab('leaves')">View all →</button>
-          </div>
+          <button class="btn btn-sm" onclick="aTab('leaves')">View all →</button>
         </div>
         <div style="overflow-x:auto"><table id="ov-reg-tbl">
           <thead><tr>
@@ -842,24 +840,13 @@ tbody tr:hover{background:#FFFAF7}
         </table></div>
       </div>
 
-      <!-- ── Two-col: pending approvals + employee list ── -->
-      <div class="two-col" style="margin-bottom:1rem">
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title">Pending approvals</div>
-            <span id="pending-count" class="badge bg-red">0</span>
-          </div>
-          <table id="adm-pending-tbl"><thead><tr><th style="width:44%">Employee</th><th style="width:16%">Days</th><th style="width:40%">Action</th></tr></thead>
-          <tbody id="adm-pending"></tbody></table>
-        </div>
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title">All employees</div>
-          </div>
-          <table id="adm-emp-ov-tbl"><thead><tr><th style="width:44%">Name</th><th style="width:22%">Branch</th><th style="width:34%">PL balance</th></tr></thead>
-          <tbody id="adm-emp-ov"></tbody></table>
-        </div>
+      <!-- ── Section: Stores ── -->
+      <div class="ov-section">
+        <div class="ov-section-label">Stores</div>
+        <div class="ov-section-line"></div>
+        <div id="ov-stores-month" style="font-size:11px;color:var(--text3)"></div>
       </div>
+      <div class="store-grid" id="ov-stores"></div>
     </div>
     <div id="at-employees" style="display:none">
       <div class="page-header"><div class="page-title">Employees</div><div class="page-sub">Manage team members across all branches</div></div>
@@ -889,6 +876,7 @@ tbody tr:hover{background:#FFFAF7}
     </div>
     <div id="at-leaves" style="display:none">
       <div class="page-header"><div class="page-title">Leave management</div><div class="page-sub">Review, approve, and add leave entries</div></div>
+      <div class="store-tabs"></div>
       <div class="card">
         <div class="card-header"><div class="card-title">Add leave entry</div></div>
         <div class="form-grid">
@@ -914,11 +902,11 @@ tbody tr:hover{background:#FFFAF7}
         </div>
         <div style="overflow-x:auto"><table id="adm-leaves-table">
           <thead><tr>
-            <th style="width:11%">Employee</th><th style="width:9%">Branch</th>
-            <th style="width:9%">From</th><th style="width:9%">To</th>
-            <th style="width:6%">Days</th><th style="width:6%">Type</th><th style="width:9%">Month</th>
-            <th style="width:18%">Note</th><th style="width:8%">Source</th>
-            <th style="width:8%">Status</th><th style="width:7%">Actions</th>
+            <th style="width:10%">Employee</th><th style="width:10%;padding-left:6px">Branch</th>
+            <th style="width:8%">From</th><th style="width:8%">To</th>
+            <th style="width:5%">Days</th><th style="width:6%">Type</th><th style="width:8%">Month</th>
+            <th style="width:17%">Note</th><th style="width:7%;padding-left:6px">Source</th>
+            <th style="width:9%;padding-left:6px">Status</th><th style="width:12%;padding-left:6px">Actions</th>
           </tr></thead>
           <tbody id="adm-leaves-tbl"></tbody>
         </table></div>
@@ -1030,11 +1018,12 @@ tbody tr:hover{background:#FFFAF7}
 
       <!-- Filters + Summary -->
       <div id="att-results" style="display:none">
+        <div class="store-tabs"></div>
         <div class="card">
           <div class="card-header">
             <div class="card-title">📋 Attendance report</div>
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-              <select class="filter-select" id="att-filter-branch" onchange="onAttBranchChange()"><option value="">All stores</option><option>Kalyan</option><option>Dombivali</option><option>Ambernath</option></select>
+              <select class="filter-select" id="att-filter-branch" onchange="onAttBranchChange()" style="display:none"><option value="">All stores</option><option>Kalyan</option><option>Dombivali</option><option>Ambernath</option></select>
               <select class="filter-select" id="att-filter-month" onchange="onAttMonthChange()"><option value="">All months</option></select>
               <select class="filter-select" id="att-filter-emp" onchange="renderAttTable()"><option value="">All employees</option></select>
               <select class="filter-select" id="att-filter-date" onchange="renderAttTable()"><option value="">All dates</option></select>
@@ -1562,12 +1551,14 @@ function aTab(t){
     const n=document.getElementById("nav-"+tab);if(n)n.className="nav-item"+(tab===t?" active":"");
   });
   if(t==="overview"){renderAdmin();}
-  if(t==="leaves"){populateMlEmps();populateAdmFilters();renderAdmLeaves();}
+  if(t==="leaves"){renderStoreTabs();populateMlEmps();populateAdmFilters();renderAdmLeaves();renderRegRequests();}
   if(t==="attendance"){
+    renderStoreTabs();
     renderRegRequests();
     if(attData.length){
       document.getElementById("att-clear-btn").style.display="";
       document.getElementById("att-results").style.display="";
+      populateAttFilters();
       renderAttTable();
     }
     populateOvMonthFilter();
@@ -1680,7 +1671,10 @@ function updateRegBadge(){
 function populateOvMonthFilter(){
   const sel=document.getElementById('ov-month-filter');
   if(!sel)return;
-  const months=[...new Set(attData.map(r=>r.date?r.date.slice(0,7):'').filter(Boolean))].sort().reverse();
+  const months=[...new Set([
+    ...attData.map(r=>r.date?r.date.slice(0,7):''),
+    ...S.leaves.map(l=>l.month||(l.from?monthOf(l.from):''))
+  ].filter(Boolean))].sort().reverse();
   const curVal=sel.value;
   sel.innerHTML='<option value="">Current month</option>'+months.map(m=>{const[y,mo]=m.split('-');return`<option value="${m}">${MN[parseInt(mo)-1]} ${y}</option>`;}).join('');
   if(curVal&&months.includes(curVal))sel.value=curVal;
@@ -1707,180 +1701,165 @@ function renderAdmin(){
   renderAdmMetrics();renderAdmAttMetrics();renderAdmEmpOv();renderAdmPending();renderOvRegRequests();
 }
 
+// ── Store (branch) helpers ───────────────────────────────────────────────────
+let STORE_SEL='';   // '' = all stores; shared by Leaves and Attendance tabs
+const BASE_STORES=['Kalyan','Dombivali','Ambernath'];
+function storeList(){
+  const extra=[...new Set(S.employees.filter(e=>!e.is_admin).map(e=>e.branch).filter(Boolean))].filter(b=>!BASE_STORES.includes(b));
+  return BASE_STORES.concat(extra);
+}
+function fmtDays(v){v=Math.round(v*100)/100;return v%1===0?String(v):String(v)}
+function renderStoreTabs(){
+  const html=['',...storeList()].map(s=>`<button class="store-tab${STORE_SEL===s?' active':''}" onclick="setStore('${s}')">${s||'All stores'}</button>`).join('');
+  document.querySelectorAll('.store-tabs').forEach(el=>el.innerHTML=html);
+  const sel=document.getElementById('att-filter-branch');
+  if(sel){
+    sel.innerHTML='<option value="">All stores</option>'+storeList().map(b=>`<option>${b}</option>`).join('');
+    sel.value=STORE_SEL;
+  }
+}
+function setStore(s){
+  STORE_SEL=s||'';
+  renderStoreTabs();
+  const af=document.getElementById('af-emp');if(af)af.value='';
+  const rf=document.getElementById('reg-filter-emp');if(rf)rf.value='';
+  populateAdmFilters();renderAdmLeaves();renderRegRequests();
+  if(attData.length)onAttBranchChange();
+}
+function openStore(store,tab,month){
+  STORE_SEL=store||'';
+  aTab(tab);
+  if(month){
+    if(tab==='leaves'){
+      const m=document.getElementById('af-mon');
+      if(m&&[...m.options].some(o=>o.value===month)){m.value=month;renderAdmLeaves();}
+    } else if(tab==='attendance'){
+      const m=document.getElementById('att-filter-month');
+      if(m&&[...m.options].some(o=>o.value===month)){m.value=month;onAttMonthChange();}
+    }
+  }
+}
+function storeGroupRow(colspan,name,countLabel,chips){
+  return `<tr class="store-group-row"><td colspan="${colspan}"><div class="sg-wrap"><span class="sg-name">${name}</span><span class="sg-count">${countLabel}</span><span class="sg-chips">${chips}</span></div></td></tr>`;
+}
+function sgChip(label,val,bg,col){
+  return `<span class="sg-chip" style="background:${bg};color:${col}">${label} <strong>${val}</strong></span>`;
+}
+// Splits a list into [storeName, items[]] pairs, in store order
+function groupByStore(items,branchOf){
+  const groups=new Map();
+  items.forEach(it=>{const b=branchOf(it)||'Other';if(!groups.has(b))groups.set(b,[]);groups.get(b).push(it);});
+  const known=storeList();
+  const order=[...known.filter(s=>groups.has(s)),...[...groups.keys()].filter(s=>!known.includes(s))];
+  return order.map(s=>[s,groups.get(s)]);
+}
+
 function renderAdmMetrics(){
-  const branchF=document.getElementById('ov-branch-filter')?.value||'';
-  let emps=S.employees;
-  if(branchF)emps=emps.filter(e=>e.branch===branchF);
-  const empIds=new Set(emps.map(e=>e.id));
-  const total=emps.length,active=emps.filter(e=>e.plStart).length;
-
-  const monthF=document.getElementById('ov-month-filter')?.value||'';
-  const thisUsed=S.leaves.filter(l=>{
-    if(!empIds.has(l.empId)||l.status!=="Approved")return false;
-    const d=new Date(l.from);
-    if(monthF)return l.month===monthF||(l.month===undefined&&d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')===monthF);
-    return d.getMonth()===CM&&d.getFullYear()===CY;
-  }).reduce((s,l)=>s+l.days,0);
-
-  const totalBal=emps.reduce((s,e)=>s+balance(e),0);
-  const pend=S.leaves.filter(l=>empIds.has(l.empId)&&l.status==="Pending").length;
+  // Sidebar badge for pending leave requests
+  const pend=S.leaves.filter(l=>l.status==="Pending").length;
   const pb=document.getElementById("pending-badge");
-  pend>0?(pb.textContent=pend,pb.style.display=""):(pb.style.display="none");
-  document.getElementById("adm-metrics").innerHTML=`
-    <div class="metric-card"><div class="metric-label">Total employees</div><div class="metric-value" style="color:var(--purple)">${total}</div><div class="metric-sub">${active} with PL active</div></div>
-    <div class="metric-card"><div class="metric-label">PL used this month</div><div class="metric-value" style="color:var(--amber)">${thisUsed}</div><div class="metric-sub">${monthF?fmtM(monthF):MN[CM]+' '+CY}</div></div>
-    <div class="metric-card"><div class="metric-label">Pending approvals</div><div class="metric-value" style="color:var(--red)">${pend}</div><div class="metric-sub">Awaiting review</div></div>
-    <div class="metric-card"><div class="metric-label">Total PL balance</div><div class="metric-value">${totalBal}</div><div class="metric-sub">Across all employees</div></div>`;
+  if(pb){pend>0?(pb.textContent=pend,pb.style.display=""):(pb.style.display="none");}
+  renderOvStores();
+}
+function renderAdmAttMetrics(){renderOvStores();}
+function renderAdmEmpOv(){}
+
+function updateOvActionVisibility(){
+  const pl=S.leaves.filter(l=>l.status==="Pending").length;
+  const pr=(S.regularizations||[]).filter(r=>r.status==="Pending").length;
+  const a=document.getElementById("ov-pending-card"),b=document.getElementById("ov-reg-card"),n=document.getElementById("ov-none");
+  if(a)a.style.display=pl?"":"none";
+  if(b)b.style.display=pr?"":"none";
+  if(n)n.style.display=(pl||pr)?"none":"";
 }
 
-function renderAdmAttMetrics(){
-  const attMetricsEl=document.getElementById('adm-att-metrics');
-  const flagsEl=document.getElementById('ov-att-flags');
-  const flagChipsEl=document.getElementById('ov-att-flag-chips');
-  const breakdownCard=document.getElementById('ov-att-breakdown-card');
-  const attMonthLabel=document.getElementById('ov-att-month-label');
-
-  if(!attData.length){
-    attMetricsEl.innerHTML=`<div style="grid-column:1/-1;padding:18px;background:var(--surface);border-radius:var(--radius);border:1px dashed var(--border2);text-align:center;color:var(--text3);font-size:12px">
-      No attendance data uploaded yet — <button onclick="aTab('attendance')" class="btn btn-sm" style="margin-left:6px">Upload Excel →</button>
-    </div>`;
-    flagsEl.style.display='none';
-    breakdownCard.style.display='none';
-    attMonthLabel.textContent='';
-    return;
-  }
-
-  const branchF=document.getElementById('ov-branch-filter')?.value||'';
+// One card per store for the month chosen on the Overview
+function renderOvStores(){
+  const el=document.getElementById('ov-stores');
+  if(!el)return;
   const monthF=document.getElementById('ov-month-filter')?.value||'';
+  const month=monthF||`${CY}-${String(CM+1).padStart(2,'0')}`;
+  const lbl=document.getElementById('ov-stores-month');
+  if(lbl)lbl.textContent=fmtM(month);
 
-  // Determine target month string
-  const targetMonth=monthF||`${CY}-${String(CM+1).padStart(2,'0')}`;
-  const targetLabel=fmtM(targetMonth);
-  attMonthLabel.textContent=targetLabel;
+  const monthAtt=attData.filter(r=>r.date&&r.date.startsWith(month)).map(r=>({...r,...classifyRow(r)}));
+  const empById=new Map(S.employees.map(e=>[e.id,e]));
+  const attEmp=r=>{
+    if(r.emp_id&&empById.has(r.emp_id))return empById.get(r.emp_id);
+    const n=(r.name||'').trim().toLowerCase();
+    return S.employees.find(e=>{const en=e.name.trim().toLowerCase();return en===n||en.startsWith(n)||n.startsWith(en.split(' ')[0]);})||null;
+  };
+  const monthLeaves=S.leaves.filter(l=>(l.month||monthOf(l.from))===month);
+  const lopLeaveKeys=new Set(monthLeaves.filter(l=>l.isLOP&&l.status==="Approved").map(l=>l.empId+'|'+l.from));
 
-  // Filter by branch (match employee records)
-  let rows=attData.filter(r=>r.date&&r.date.startsWith(targetMonth));
-  if(branchF){
-    const branchEmps=new Set(S.employees.filter(e=>e.branch===branchF).map(e=>e.name.trim().toLowerCase()));
-    rows=rows.filter(r=>{
-      const n=(r.name||'').trim().toLowerCase();
-      return [...branchEmps].some(en=>en===n||en.startsWith(n.split(' ')[0])||n.startsWith(en.split(' ')[0]));
+  el.innerHTML=storeList().map(store=>{
+    const emps=S.employees.filter(e=>e.branch===store&&!e.is_admin);
+    const ids=new Set(emps.map(e=>e.id));
+    const firstNames=emps.map(e=>e.name.trim().split(' ')[0]);
+    const short=e=>{const f=e.name.trim().split(' ')[0];return firstNames.filter(x=>x===f).length>1?e.name:f;};
+    const pl=new Map(),lop=new Map(),half=new Map(),late=new Map(),miss=new Map();
+    const add=(m,id,v)=>m.set(id,(m.get(id)||0)+v);
+
+    monthLeaves.forEach(l=>{
+      if(!ids.has(l.empId)||l.status!=="Approved")return;
+      add(l.isLOP?lop:pl,l.empId,l.days);
     });
-  }
+    let attCount=0;
+    monthAtt.forEach(r=>{
+      const e=attEmp(r);
+      if(!e||!ids.has(e.id))return;
+      attCount++;
+      if(r.status==='Half Day')add(half,e.id,1);
+      if(r.status==='LOP (Loss of Pay)'&&!lopLeaveKeys.has(e.id+'|'+r.date))add(lop,e.id,1);
+      if(r.flags&&r.flags.includes('Late In'))add(late,e.id,1);
+      if(r.flags&&r.flags.includes('Missing Out'))add(miss,e.id,1);
+    });
+    const pendL=S.leaves.filter(l=>ids.has(l.empId)&&l.status==="Pending").length;
+    const pendR=(S.regularizations||[]).filter(r=>ids.has(r.empId)&&r.status==="Pending").length;
 
-  if(!rows.length){
-    attMetricsEl.innerHTML=`<div style="grid-column:1/-1;padding:14px 18px;background:var(--surface);border-radius:var(--radius);border:1px dashed var(--border2);color:var(--text3);font-size:12px">No attendance records for ${targetLabel}${branchF?' · '+branchF:''}.</div>`;
-    flagsEl.style.display='none';
-    breakdownCard.style.display='none';
-    return;
-  }
-
-  const classified=rows.map(r=>({...r,...classifyRow(r)}));
-
-  const present   =classified.filter(r=>r.status==='Present').length;
-  const absent    =classified.filter(r=>r.status==='Absent').length;
-  const halfDay   =classified.filter(r=>r.status==='Half Day').length;
-  const weekOff   =classified.filter(r=>r.status==='Week Off').length;
-  const onLeave   =classified.filter(r=>['On Leave','PL (Paid Leave)','LOP (Loss of Pay)'].includes(r.status)).length;
-  const lateIn    =classified.filter(r=>r.flags&&r.flags.some(f=>f.includes('Late In'))).length;
-  const earlyOut  =classified.filter(r=>r.flags&&r.flags.includes('Early Out')).length;
-  const missingOut=classified.filter(r=>r.flags&&r.flags.includes('Missing Out')).length;
-  const pendingReg=S.regularizations?S.regularizations.filter(r=>r.status==='Pending').length:0;
-  const totalWorked=classified.filter(r=>r.hoursM!==null&&r.hoursM>0);
-  const avgHours=totalWorked.length?Math.round(totalWorked.reduce((s,r)=>s+r.hoursM,0)/totalWorked.length):null;
-
-  attMetricsEl.innerHTML=`
-    <div class="metric-card" style="border-top:3px solid var(--green)">
-      <div class="metric-label">Present</div>
-      <div class="metric-value" style="color:var(--green)">${present}</div>
-      <div class="metric-sub">${rows.length} total records</div>
-    </div>
-    <div class="metric-card" style="border-top:3px solid var(--purple)">
-      <div class="metric-label">Half Days</div>
-      <div class="metric-value" style="color:var(--purple)">${halfDay}</div>
-      <div class="metric-sub">PL deducted</div>
-    </div>
-    <div class="metric-card" style="border-top:3px solid var(--blue)">
-      <div class="metric-label">On Leave / LOP</div>
-      <div class="metric-value" style="color:var(--blue)">${onLeave}</div>
-      <div class="metric-sub">Leave days</div>
-    </div>
-    <div class="metric-card" style="border-top:3px solid var(--amber)">
-      <div class="metric-label">Avg Hours/Day</div>
-      <div class="metric-value" style="color:var(--amber)">${avgHours!==null?minsToHHMM(avgHours):'—'}</div>
-      <div class="metric-sub">${totalWorked.length} days tracked</div>
-    </div>
-    <div class="metric-card" style="border-top:3px solid var(--accent);cursor:pointer" onclick="aTab('attendance')">
-      <div class="metric-label">Pending Reg.</div>
-      <div class="metric-value" style="color:var(--accent)">${pendingReg}</div>
-      <div class="metric-sub">Awaiting review</div>
+    const stat=(label,m,unit)=>{
+      const total=[...m.values()].reduce((s,v)=>s+v,0);
+      const names=[...m.entries()].sort((a,b)=>b[1]-a[1]).map(([id,v])=>{
+        const e=empById.get(id);
+        return `<span onclick="viewEmpProfile(${id})">${e?short(e):'?'} ${fmtDays(v)}</span>`;
+      }).join(' · ');
+      return `<div class="sc-stat">
+        <div class="sc-stat-top"><span>${label}</span><strong class="${total?'':'zero'}">${fmtDays(total)}${unit}</strong></div>
+        ${names?`<div class="sc-names">${names}</div>`:''}
+      </div>`;
+    };
+    const pendTotal=pendL+pendR;
+    return `<div class="store-card">
+      <div class="sc-head">
+        <div class="sc-name">${store}</div>
+        <div class="sc-sub">${emps.length} employee${emps.length===1?'':'s'}</div>
+        ${pendTotal?`<div class="sc-pend">${pendTotal} pending</div>`:''}
+      </div>
+      ${stat('PL taken',pl,' d')}
+      ${stat('LOP',lop,' d')}
+      ${attCount
+        ? stat('Half days',half,'')+stat('Late-ins',late,'')+stat('Missing punch-out',miss,'')
+        : `<div class="sc-note">No attendance uploaded for ${fmtM(month)} yet.</div>`}
+      <div class="sc-actions">
+        <button class="btn btn-sm" onclick="openStore('${store}','leaves','${month}')">Leaves →</button>
+        <button class="btn btn-sm" onclick="openStore('${store}','attendance','${month}')">Attendance →</button>
+      </div>
     </div>`;
-
-  // Flag chips
-  const flagItems=[
-    lateIn    && {icon:'⏰',label:`Late In`,count:lateIn,   bg:'var(--amber-soft)',col:'#A06600'},
-    earlyOut  && {icon:'🚪',label:`Early Out`,count:earlyOut, bg:'#FEF0FF',col:'#7A2D9A'},
-    missingOut&& {icon:'❓',label:`Missing Out`,count:missingOut,bg:'var(--blue-soft)',col:'#2065A8'},
-  ].filter(Boolean);
-
-  if(flagItems.length){
-    flagsEl.style.display='';
-    flagChipsEl.innerHTML=`<span style="font-size:11px;color:var(--text3);font-weight:600;align-self:center">Flags this month:</span>`+
-      flagItems.map(f=>`<span style="display:inline-flex;align-items:center;gap:5px;background:${f.bg};color:${f.col};padding:5px 12px;border-radius:99px;font-size:12px;font-weight:600">${f.icon} ${f.label} <strong>${f.count}</strong></span>`).join('');
-  } else {
-    flagsEl.style.display='none';
-  }
-
-  // Employee-level breakdown table
-  const empNames=[...new Set(classified.map(r=>(r.name||'').trim()))].filter(Boolean);
-  const breakdownRows=empNames.map(name=>{
-    const empRows=classified.filter(r=>(r.name||'').trim()===name);
-    const ep=empRows.filter(r=>r.status==='Present').length;
-    const eLOP=empRows.filter(r=>r.status==='LOP (Loss of Pay)').length;
-    const ew=empRows.filter(r=>r.status==='Week Off').length;
-    const ePL=empRows.filter(r=>r.status==='PL (Paid Leave)'||r.status==='On Leave').length;
-    const eh=empRows.filter(r=>r.status==='Half Day').length;
-    const eLate=empRows.filter(r=>r.flags&&r.flags.some(f=>f.includes('Late In'))).length;
-    const worked=empRows.filter(r=>r.hoursM!==null&&r.hoursM>0);
-    const avgH=worked.length?Math.round(worked.reduce((s,r)=>s+r.hoursM,0)/worked.length):null;
-    // Find matching employee record for profile link
-    const matchEmp=S.employees.find(e=>{
-      const en=e.name.trim().toLowerCase(),nn=name.toLowerCase();
-      return en===nn||en.startsWith(nn)||nn.startsWith(en.split(' ')[0]);
-    });
-    const nameCell=matchEmp
-      ?`<div style="font-weight:500;cursor:pointer;color:#534AB7" onclick="viewEmpProfile(${matchEmp.id})">${name}</div>`
-      :`<div style="font-weight:500">${name}</div>`;
-    return `<tr>
-      <td>${nameCell}</td>
-      <td><span class="badge bg-green">${ep}</span></td>
-      <td><span class="badge ${eLOP>0?'bg-red':'bg-gray'}">${eLOP}</span></td>
-      <td><span class="badge bg-gray">${ew}</span></td>
-      <td><span class="badge ${ePL>0?'bg-teal':'bg-gray'}">${ePL}</span></td>
-      <td><span class="badge bg-purple">${eh}</span></td>
-      <td>${eLate>0?`<span class="badge bg-amber">${eLate}</span>`:'<span style="color:var(--text3)">—</span>'}</td>
-      <td style="font-weight:500;color:${avgH!==null?(avgH>=540?'var(--green)':'var(--amber)'):'var(--text3)'}">${avgH!==null?minsToHHMM(avgH):'—'}</td>
-    </tr>`;
   }).join('');
+}
 
-  document.getElementById('ov-att-breakdown-tbody').innerHTML=breakdownRows||`<tr><td colspan="8"><div class="empty-state"><p>No breakdown available</p></div></td></tr>`;
-  document.getElementById('ov-att-breakdown-month').textContent=`· ${targetLabel}${branchF?' · '+branchF:''}`;
-  breakdownCard.style.display='';
-}
-function renderAdmEmpOv(){
-  document.getElementById("adm-emp-ov").innerHTML=S.employees.map(e=>{
-    const b=balance(e),cls=b>=4?"bg-green":b>=1?"bg-amber":"bg-red";
-    const lbl=e.plStart?`<span class="badge ${cls}">${b} PL</span>`:`<span class="badge bg-gray">CF: ${e.cf}</span>`;
-    return`<tr><td><div style="font-weight:500;cursor:pointer;color:#534AB7" onclick="viewEmpProfile(${e.id})" title="View profile">${e.name}</div><div style="font-size:11px;color:var(--color-text-secondary)">${e.desig}</div></td><td><span class="badge bg-blue">${e.branch}</span></td><td>${lbl}</td></tr>`;
-  }).join("");
-}
 function renderAdmPending(){
-  const pend=S.leaves.filter(l=>l.status==="Pending");
+  const empById=new Map(S.employees.map(e=>[e.id,e]));
+  const known=storeList();
+  const rank=l=>{const i=known.indexOf(empById.get(l.empId)?.branch);return i<0?99:i;};
+  const pend=S.leaves.filter(l=>l.status==="Pending").sort((a,b)=>rank(a)-rank(b)||String(a.from).localeCompare(String(b.from)));
   document.getElementById("pending-count").textContent=pend.length;
   document.getElementById("adm-pending").innerHTML=pend.length?pend.map(l=>{
-    const emp=S.employees.find(e=>e.id===l.empId);
-    return`<tr><td><div style="font-weight:500">${emp?emp.name.split(" ")[0]:"?"}</div><div style="font-size:11px;color:var(--color-text-secondary)">${fmtD(l.from)} – ${fmtD(l.to)}</div></td><td><span class="badge bg-amber">${l.days}d</span></td><td><button class="btn btn-approve btn-sm" onclick="updateLeave(${l.id},'Approved')">Approve</button> <button class="btn btn-danger btn-sm" onclick="updateLeave(${l.id},'Rejected')">Reject</button></td></tr>`;
+    const emp=empById.get(l.empId);
+    const dates=l.from===l.to?fmtD(l.from):`${fmtD(l.from)} – ${fmtD(l.to)}`;
+    return`<tr><td style="white-space:normal;overflow:visible"><div style="width:100%"><div><span style="font-weight:600">${emp?emp.name:"?"}</span> <span class="badge bg-blue" style="margin-left:4px">${emp?emp.branch:""}</span></div><div style="font-size:11px;font-weight:400;color:var(--text2);margin-top:3px;white-space:normal;word-break:break-word">${dates}${l.note?" · "+l.note:""}</div></div></td><td><span class="badge bg-amber">${l.days}d</span></td><td style="white-space:normal;overflow:visible"><button class="btn btn-approve btn-sm" onclick="updateLeave(${l.id},'Approved')">Approve</button> <button class="btn btn-danger btn-sm" onclick="updateLeave(${l.id},'Rejected')">Reject</button></td></tr>`;
   }).join(""):`<tr><td colspan="3"><div class="empty-state"><p style="font-size:24px;opacity:.3">✓</p><p>No pending requests</p></div></td></tr>`;
+  updateOvActionVisibility();
 }
 
 function renderAdmEmpTable(){
@@ -1996,10 +1975,14 @@ function populateMlEmps(){
   document.getElementById("ml-emp").innerHTML=S.employees.map(e=>`<option value="${e.id}">${e.name} — ${e.branch}</option>`).join("");
 }
 function populateAdmFilters(){
-  const af=document.getElementById("af-emp");
-  af.innerHTML=`<option value="">All employees</option>`+S.employees.map(e=>`<option value="${e.id}">${e.name}</option>`).join("");
+  const af=document.getElementById("af-emp"),am=document.getElementById("af-mon");
+  const curE=af.value,curM=am.value;
+  const emps=STORE_SEL?S.employees.filter(e=>e.branch===STORE_SEL):S.employees;
+  af.innerHTML=`<option value="">All employees</option>`+emps.map(e=>`<option value="${e.id}">${e.name}</option>`).join("");
+  if(curE&&emps.some(e=>String(e.id)===curE))af.value=curE;
   const months=[...new Set(S.leaves.map(l=>l.month||monthOf(l.from)).filter(Boolean))].sort().reverse();
-  document.getElementById("af-mon").innerHTML=`<option value="">All months</option>`+months.map(m=>`<option value="${m}">${fmtM(m)}</option>`).join("");
+  am.innerHTML=`<option value="">All months</option>`+months.map(m=>`<option value="${m}">${fmtM(m)}</option>`).join("");
+  if(curM&&months.includes(curM))am.value=curM;
 }
 function addLeave(){
   const empId=parseInt(document.getElementById("ml-emp").value);
@@ -2052,14 +2035,16 @@ function renderAdmLeaves(){
   const monF=document.getElementById("af-mon")?.value||"";
   const srcF=document.getElementById("af-src")?.value||"";
   const statF=document.getElementById("af-stat")?.value||"";
+  const _empById=new Map(S.employees.map(e=>[e.id,e]));
   let leaves=S.leaves.filter(l=>{
+    if(STORE_SEL&&_empById.get(l.empId)?.branch!==STORE_SEL)return false;
     if(empF&&l.empId!==parseInt(empF))return false;
     if(monF&&(l.month||monthOf(l.from))!==monF)return false;
     if(srcF&&l.source!==srcF)return false;
     if(statF&&l.status!==statF)return false;
     return true;
   }).reverse();
-  document.getElementById("adm-leaves-tbl").innerHTML=leaves.length?leaves.map(l=>{
+  const _leaveRow=l=>{
     const emp=S.employees.find(e=>e.id===l.empId);
     const cls=l.status==="Approved"?"bg-green":l.status==="Rejected"?"bg-red":"bg-amber";
     const src=l.source==="admin"?`<span class="chip-admin">Admin</span>`:`<span class="chip-emp">Emp</span>`;
@@ -2067,8 +2052,19 @@ function renderAdmLeaves(){
       ? `<span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:99px;background:var(--red-soft);color:#8B2500">LOP</span>`
       : `<span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:99px;background:var(--green-soft);color:#0E6E56">PL</span>`;
     const acts=l.status==="Pending"?`<button class="btn btn-approve btn-sm" onclick="updateLeave(${l.id},'Approved')">✓</button> <button class="btn btn-danger btn-sm" onclick="updateLeave(${l.id},'Rejected')">✕</button>`:`<button class="btn btn-danger btn-sm" onclick="deleteLeave(${l.id})">Del</button>`;
-    return`<tr><td style="font-weight:500">${emp?emp.name.split(" ")[0]:"?"}</td><td><span class="badge bg-blue">${emp?emp.branch:""}</span></td><td>${fmtD(l.from)}</td><td>${fmtD(l.to)}</td><td>${l.days}</td><td>${typeTag}</td><td style="font-size:12px">${fmtM(l.month||monthOf(l.from))}</td><td style="font-size:12px;color:var(--color-text-secondary);white-space:normal;word-break:break-word;overflow:visible">${l.note||"—"}</td><td>${src}</td><td><span class="badge ${cls}">${l.status}</span></td><td>${acts}</td></tr>`;
-  }).join(""):`<tr><td colspan="11"><div class="empty-state"><p>No leave entries found</p></div></td></tr>`;
+    return`<tr><td style="font-weight:500">${emp?emp.name.split(" ")[0]:"?"}</td><td style="padding-left:6px;padding-right:6px;overflow:visible"><span class="badge bg-blue">${emp?emp.branch:""}</span></td><td>${fmtD(l.from)}</td><td>${fmtD(l.to)}</td><td>${l.days}</td><td>${typeTag}</td><td style="font-size:12px">${fmtM(l.month||monthOf(l.from))}</td><td style="font-size:12px;color:var(--color-text-secondary);white-space:normal;word-break:break-word;overflow:visible">${l.note||"—"}</td><td style="padding-left:6px;padding-right:6px;overflow:visible">${src}</td><td style="padding-left:6px;padding-right:6px;overflow:visible"><span class="badge ${cls}">${l.status}</span></td><td style="padding-left:6px;padding-right:6px;overflow:visible">${acts}</td></tr>`;
+  };
+  // One block per store, each with its own subtotal
+  document.getElementById("adm-leaves-tbl").innerHTML=leaves.length?groupByStore(leaves,l=>_empById.get(l.empId)?.branch).map(([store,list])=>{
+    const appr=list.filter(l=>l.status==="Approved");
+    const pl=appr.filter(l=>!l.isLOP).reduce((s,l)=>s+l.days,0);
+    const lop=appr.filter(l=>l.isLOP).reduce((s,l)=>s+l.days,0);
+    const pend=list.filter(l=>l.status==="Pending").length;
+    const chips=sgChip("PL",fmtDays(pl)+" d","var(--green-soft)","#0E6E56")
+      +sgChip("LOP",fmtDays(lop)+" d","var(--red-soft)","#8B2500")
+      +(pend?sgChip("Pending",pend,"var(--amber-soft)","#A06600"):"");
+    return storeGroupRow(11,store,`${list.length} entr${list.length===1?"y":"ies"}`,chips)+list.map(_leaveRow).join("");
+  }).join(""):`<tr><td colspan="11"><div class="empty-state"><p>No leave entries found${STORE_SEL?" for "+STORE_SEL:""}</p></div></td></tr>`;
 }
 function deleteLeave(id){
   if(!confirm("Delete this leave entry?"))return;
@@ -2242,7 +2238,7 @@ function renderRegRequests(){
   if(empSel){
     const cur = empSel.value;
     empSel.innerHTML = '<option value="">All employees</option>' +
-      S.employees.map(e=>`<option value="${e.id}">${e.name}</option>`).join("");
+      (STORE_SEL?S.employees.filter(e=>e.branch===STORE_SEL):S.employees).map(e=>`<option value="${e.id}">${e.name}</option>`).join("");
     if(cur) empSel.value=cur;
   }
 
@@ -2266,6 +2262,7 @@ function renderRegRequests(){
   const fStatus = document.getElementById("reg-filter-status")?.value||"";
 
   let regs = [...S.regularizations].reverse();
+  if(STORE_SEL) regs = regs.filter(r=>S.employees.find(e=>e.id===r.empId)?.branch===STORE_SEL);
   if(fEmp)    regs = regs.filter(r=>String(r.empId)===fEmp);
   if(fMonth)  regs = regs.filter(r=>r.date&&r.date.startsWith(fMonth));
   if(fStatus) regs = regs.filter(r=>r.status===fStatus);
@@ -2303,21 +2300,7 @@ function renderRegRequests(){
 function renderOvRegRequests(){
   if(!S.regularizations) S.regularizations=[];
 
-  // Populate employee filter
-  const empSel = document.getElementById("ov-reg-filter-emp");
-  if(empSel){
-    const cur = empSel.value;
-    empSel.innerHTML = '<option value="">All employees</option>' +
-      S.employees.map(e=>`<option value="${e.id}">${e.name}</option>`).join("");
-    if(cur) empSel.value = cur;
-  }
-
-  const fEmp    = document.getElementById("ov-reg-filter-emp")?.value||"";
-  const fStatus = document.getElementById("ov-reg-filter-status")?.value;  // default "Pending"
-
-  let regs = [...S.regularizations].reverse();
-  if(fEmp)    regs = regs.filter(r=>String(r.empId)===fEmp);
-  if(fStatus) regs = regs.filter(r=>r.status===fStatus);
+  let regs = [...S.regularizations].reverse().filter(r=>r.status==="Pending");
 
   // Pending chip count (always based on total pending, ignoring emp filter)
   const pendingCount = S.regularizations.filter(r=>r.status==="Pending").length;
@@ -2330,7 +2313,7 @@ function renderOvRegRequests(){
   if(!tbody) return;
   tbody.innerHTML = regs.map(r=>{
     const emp = S.employees.find(e=>e.id===r.empId);
-    const empName = emp ? emp.name : "—";
+    const empName = emp ? `${emp.name}<div style="font-size:10px;color:var(--text3);font-weight:500">${emp.branch||""}</div>` : "—";
     const actions = r.status==="Pending"
       ? `<div style="display:flex;flex-direction:column;gap:3px">
            <button class="btn btn-approve btn-sm" style="width:100%;padding:3px 8px;font-size:11px" onclick="approveReg(${r.id})">✓</button>
@@ -2346,10 +2329,11 @@ function renderOvRegRequests(){
       <td style="font-size:12px;color:var(--green);font-weight:500">${r.newIn||"—"}</td>
       <td style="font-size:12px;color:var(--green);font-weight:500">${r.newOut||"—"}</td>
       <td style="font-size:12px;color:var(--text2);white-space:normal;word-break:break-word;overflow:visible">${r.reason||"—"}</td>
-      <td><span class="badge ${statusCls(r.status)}" style="font-size:11px">${r.status}</span></td>
+      <td style="overflow:visible;padding-left:4px;padding-right:4px"><span class="badge ${statusCls(r.status)}" style="font-size:11px">${r.status}</span></td>
       <td style="min-width:60px">${actions}</td>
     </tr>`;
   }).join("") || `<tr><td colspan="10"><div class="empty-state" style="padding:1.5rem"><p>No regularization requests</p></div></td></tr>`;
+  updateOvActionVisibility();
 }
 
 function approveReg(id){
@@ -3587,7 +3571,7 @@ function renderAttTable(){
     return;
   }
 
-  document.getElementById('att-tbl-body').innerHTML = filtered.map(r=>{
+  const _attRow = r=>{
     const sh = SHIFTS[r.shift]||SHIFTS['1st'];
     const _ns = normaliseShift(r.shift);
     const shiftBadge = _ns && SHIFTS[_ns] ? 'bg-blue' : (r.shift&&r.shift.trim().toLowerCase().startsWith('weekoff')?'bg-gray':r.shift&&r.shift.trim().toLowerCase().startsWith('pl')?'bg-green':r.shift&&r.shift.trim().toLowerCase().startsWith('lop')?'bg-red':'bg-gray');
@@ -3651,6 +3635,41 @@ function renderAttTable(){
       <td><span class="badge ${statusColor}">${r.status}</span>${halfTag}${flagPills}</td>
       <td>${admActionCell}</td>
     </tr>`;
+  };
+
+  // One block per store, each with its own subtotal (same counting rules as the chips above)
+  const _autoSrcG = new Set(["attendance","attendance-half","regularization"]);
+  const _storeStats = list=>{
+    let halfPL=0, halfLOP=0;
+    list.filter(r=>r.status==='Half Day').forEach(r=>{
+      const n=(r.name||'').trim().toLowerCase();
+      const e=S.employees.find(e=>e.name.trim().toLowerCase()===n||e.name.trim().toLowerCase().startsWith(n)||n.startsWith(e.name.trim().split(' ')[0].toLowerCase()));
+      if(!e) return;
+      const lv=S.leaves.filter(l=>l.empId===e.id&&l.from===r.date&&_autoSrcG.has(l.source));
+      halfPL  += lv.filter(l=>!l.isLOP).reduce((s,l)=>s+l.days,0);
+      halfLOP += lv.filter(l=> l.isLOP).reduce((s,l)=>s+l.days,0);
+    });
+    return {
+      present: list.filter(r=>r.status==='Present'||r.status==='Half Day'||r.status==='MRM').length,
+      pl:  list.filter(r=>r.status==='PL (Paid Leave)').length + halfPL,
+      lop: list.filter(r=>r.status==='LOP (Loss of Pay)').length + halfLOP,
+      half: list.filter(r=>r.status==='Half Day').length,
+      late: list.filter(r=>r.flags.includes('Late In')).length,
+      missing: list.filter(r=>r.flags.includes('Missing Out')).length
+    };
+  };
+  const _classifiedByStore = new Map(groupByStore(classified, r=>getEmpBranch(r.name)));
+  document.getElementById('att-tbl-body').innerHTML = groupByStore(filtered, r=>getEmpBranch(r.name)).map(([store,list])=>{
+    const st = _storeStats(_classifiedByStore.get(store)||list);
+    const people = new Set(list.map(r=>r.name)).size;
+    const chips =
+      sgChip("Present",st.present,"var(--green-soft)","#2D7A52") +
+      sgChip("PL",_admFmt(st.pl)+" d","var(--green-soft)","#0E6E56") +
+      sgChip("LOP",_admFmt(st.lop)+" d","var(--red-soft)","#8B2500") +
+      sgChip("Half Day",st.half,"var(--purple-soft)","var(--purple)") +
+      sgChip("Late In",st.late,"var(--amber-soft)","#A06600") +
+      sgChip("Missing Out",st.missing,"var(--blue-soft)","#2065A8");
+    return storeGroupRow(10, store, `${people} employee${people===1?'':'s'} · ${list.length} record${list.length===1?'':'s'}`, chips) + list.map(_attRow).join('');
   }).join('');
 }
 
