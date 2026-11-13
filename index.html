@@ -2964,7 +2964,7 @@ function renderEmpBreakdown(emp){
     <div style="font-size:11px;color:var(--color-text-tertiary)">${pct}% of total earned remaining</div>`;
 }
 function renderEmpHist(emp){
-  const leaves=S.leaves.filter(l=>l.empId===emp.id && l.source!=="attendance-half").reverse();
+  const leaves=S.leaves.filter(l=>l.empId===emp.id).reverse();
   document.getElementById("emp-hist").innerHTML=leaves.map(l=>{
     const cls=l.status==="Approved"?"bg-green":l.status==="Rejected"?"bg-red":"bg-amber";
     const src=l.source==="admin"?`<span class="chip-admin">Admin</span>`:`<span class="chip-emp">You</span>`;
